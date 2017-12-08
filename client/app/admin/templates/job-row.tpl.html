@@ -1,0 +1,53 @@
+<div class="job-row clickable" ng-click="expanded[job.id]=!(expanded[job.id]===true)">
+	<a class="job-row-cell" style="text-align:left; width: 320px;" >
+		<i class="fa" ng-class="(expanded[job.id]===true)?'fa-caret-down':'fa-caret-right'" aria-hidden="true"></i> {{job.name}}
+	</a>
+	<p class="job-row-cell" class="job-row-cell" style="width: 150px;">
+		{{formatJobDate(job)}}
+	</p>
+	<p class="job-row-cell" style="width: 100px;">
+		<i ng-if="job.status === 'Done'" class="fa fa-check-circle text-success" aria-hidden="true"></i>
+		<i ng-if="job.status === 'Failed'" class="fa fa-times-circle text-danger" aria-hidden="true"></i>
+		<i ng-if="job.status === 'Waiting'" class="fa fa-clock-o" aria-hidden="true"></i>
+		<i ng-if="job.status === 'Running'" class="fa fa-play-circle text-info" aria-hidden="true"></i>
+		{{job.status}}
+	</p>
+	<div class="job-row-cell progress" style="width: 180px;">
+		<div class="progress-bar" role="progressbar" ng-class="getProgressBarClass()" style="width:{{job.progress}}%">
+			{{job.progress}}%
+		</div>
+	</div>
+	<p class="job-row-cell" style="width: 60px; vertical-align: middle; padding-left: 5px;">
+		<a class="clickable" ng-show="job.status !== 'Running'" ng-click="controller.removeJobHandler(job)" title="Delete job"> <i class="fa fa-trash text-danger" aria-hidden="true"></i></a>
+		<a class="clickable" ng-click="controller.getJobLogHandler(job)" title="Show log"><i class="fa fa-info-circle text-info" aria-hidden="true"></i></a>
+	</p>
+</div>
+<div class="job-row-tasks-table" ng-show="expanded[job.id] === true">
+	<table class="table" style="width: 680px; margin-left: 20px; text-align:center;">
+		<thead>
+			<tr>
+				<th style="text-align:center;">Task id</th>
+				<th style="text-align:center;">Name</th>
+				<th style="text-align:center;">Status</th>
+				<!-- <th style="text-align:center;">Tools</th> -->
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="task in job.tasks">
+				<td width="150px;">{{ task.id }}</td>
+				<td>{{ task.name }}</td>
+				<td width="150px;">
+					<i ng-if="task.status === 'FINISHED'" class="fa fa-check-circle text-success" aria-hidden="true"></i>
+					<i ng-if="task.status === 'FAILED'" class="fa fa-times-circle text-danger" aria-hidden="true"></i>
+					<i ng-if="task.status === 'NOT_QUEUED'" class="fa fa-question-circle" aria-hidden="true"></i>
+					<i ng-if="task.status === 'QUEUED'" class="fa fa-clock-o" aria-hidden="true"></i>
+					<i ng-if="task.status === 'STARTED'" class="fa fa-play-circle text-info" aria-hidden="true"></i>
+					{{ task.status }}
+				</td>
+				<!-- <td width="50px;">
+					<i class="fa fa-info" aria-hidden="true"></i> Log
+				</td> -->
+			</tr>
+		</tbody>
+	</table>
+</div>

@@ -1,0 +1,48 @@
+<div class="col-sm-12 store-service-div">
+	<span class="service-options-overlay clickable" ng-show="!showOptions" ng-click="showOptions = true;">
+		<h2><i class="fa fa-wrench" aria-hidden="true"></i> Click for options</h2>
+	</span>
+	<div >
+		<span ng-show="service.installed !== undefined" class="label label-success" style="float: right;padding: 5px;">Installed</span>
+		<span ng-show="service.categories.indexOf('updatable') > -1" class="label label-info" style="float: right;padding: 5px;">Update available</span>
+		<h3 class="text-info">{{service.title}} (v{{service.version}})</h4>
+		</div>
+		<div>
+			<a style="float:right;" ng-show="service.secondary_website !== undefined" href="{{controller.getLinkToService(service)}}" target="_blank">
+				<i class="fa fa-external-link" aria-hidden="true"></i> Open example service
+			</a>
+			<p><b>Service name: </b>{{service.service}}</p>
+			<a style="float:right;" ng-show="service.secondary_website === undefined" href="{{controller.getLinkToService(service)}}" target="_blank">
+				<i class="fa fa-external-link" aria-hidden="true"></i> Open local service
+			</a>
+			<p ng-show="service.instance_name && service.instance_name !== ''"><b>Instance name: </b>{{service.instance_name}}</p>
+			<hr>
+			<p style="margin-bottom:10px;">{{service.description}}</p>
+			<div>
+				<span ng-repeat="category in service.categories.split(',')" class="label label-category">{{category}}</span>
+			</div>
+			<hr>
+			<div style="text-align: center; margin-top: 15px;" ng-show="showOptions">
+				<a class="btn btn-success btn-md" style="margin-right:5px;" ng-click="controller.installServiceHandler(service)" ng-show="service.installed === undefined">
+					<i class="fa fa-download" aria-hidden="true"></i> Install application
+				</a>
+
+				<div class="btn-group" style="margin-right:5px;" uib-dropdown is-open="status.isopen" ng-show="service.categories.indexOf('updatable') > -1">
+					<button type="button" class="btn btn-info btn-md" uib-dropdown-toggle ng-disabled="disabled">
+						<i class="fa fa-download" aria-hidden="true"></i> Update application <span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="single-button">
+						<li role="menuitem" ng-repeat="candidate in service.update_candidates">
+							<a class="clickable" ng-click="controller.upgradeServiceHandler(service, candidate.name)">{{candidate.title}}</a>
+						</li>
+					</ul>
+				</div>
+				<a class="btn btn-danger btn-md" style="margin-right:5px;" ng-click="controller.uninstallServiceHandler(service)" ng-show="service.installed !== undefined">
+					<i class="fa fa-trash" aria-hidden="true"></i> Uninstall application
+				</a>
+				<a class="clickable" style="margin-right:5px;" ng-click="showOptions = false;">
+					<i class="fa fa-eye-slash" aria-hidden="true"></i> Hide options
+				</a>
+			</div>
+		</div>
+	</div>

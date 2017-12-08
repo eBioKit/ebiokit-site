@@ -1,0 +1,7 @@
+.env
+.idea
+.idea/*
+*.pyc
+
+server/log/*.log
+server/db.sqlite3

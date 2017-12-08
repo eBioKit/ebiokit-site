@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html ng-app="eBioKitMainSiteApp">
+<head>
+	<meta charset="utf-8">
+	<title>eBioKit 2016</title>
+	<link href="static/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link href="static/bower_components/bootstrap/dist/css/bootstrap-theme.min.css" rel="stylesheet">
+	<link href="static/bower_components/angular-dialogs/angular-dialogs.min.css" rel="stylesheet">
+	<link href="static/css/main.css" rel="stylesheet">
+	<link href="static/css/font-awesome.min.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,600" rel="stylesheet">
+
+	<!--  Angular Setup -->
+	<script type="text/javascript" src="static/bower_components/angular/angular.min.js"></script>
+	<script type="text/javascript" src="static/bower_components/angular/angular.min.js"></script>
+	<script type="text/javascript" src="static/bower_components/jquery/dist/jquery.min.js"></script>
+	<script type="text/javascript" src="static/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="static/bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+	<script type="text/javascript" src="static/bower_components/angular-ui-router/release/angular-ui-router.min.js"></script>
+	<script type="text/javascript" src="static/bower_components/angular-sanitize/angular-sanitize.min.js"></script>
+	<script type="text/javascript" src="static/bower_components/angular-dialogs/angular-dialogs.min.js"></script>
+	<script type="text/javascript" src="static/bower_components/angular-cookies/angular-cookies.min.js"></script>
+	<script type="text/javascript">
+	function htmlbodyHeightUpdate(){
+		var height3 = $( window ).height()
+		var height1 = $('.nav').height()+50
+		height2 = $('.main').height()
+		if(height2 > height3){
+			$('html').height(Math.max(height1,height3,height2)+10);
+			$('body').height(Math.max(height1,height3,height2)+10);
+		}
+		else
+		{
+			$('html').height(Math.max(height1,height3,height2));
+			$('body').height(Math.max(height1,height3,height2));
+		}
+	}
+
+	$(document).ready(function () {
+		htmlbodyHeightUpdate()
+		$( window ).resize(function() {
+			htmlbodyHeightUpdate()
+		});
+		$( window ).scroll(function() {
+			height2 = $('.main').height()
+			htmlbodyHeightUpdate()
+		});
+	});
+	</script>
+</head>
+<body ng-controller="MainController as controller">
+	{% verbatim %}
+	<nav class="navbar navbar-inverse sidebar" ng-class="collapsedBar"role="navigation" ng-mouseenter="controller.uncollapseMenuHandler()" ng-mouseleave="controller.collapseMenuHandler()">
+		<div class="container-fluid">
+			<!-- Brand and toggle get grouped for better mobile display -->
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-sidebar-navbar-collapse-1">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#" style="padding:0;">
+					<span class="navbar-brand-collapsed-icon">
+						<span class="glyphicon glyphicon-heart"></span><br>ebiokit
+					</span>
+				</a>
+			</div>
+			<!-- Collect the nav links, forms, and other content for toggling -->
+			<div class="collapse navbar-collapse" id="bs-sidebar-navbar-collapse-1">
+				<ul class="nav navbar-nav" style="width: 100%;">
+					<li uib-tooltip="Menu" tooltip-placement="right">
+						<a class="clickable" ng-click="controller.displayApplicationMenuClickHandler()" ng-mouseenter="controller.displayApplicationMenuHandler()" ng-mouseleave="controller.cancelDisplayApplicationMenuHandler()">Menu
+							<span style="font-size:16px;" class="pull-right hidden-xs showopacity glyphicon glyphicon-th"></span>
+						</a>
+					</li>
+					<li ng-repeat="service in open_services" ng-class="(visible_services.indexOf(service) !== -1 )?'active':''"  uib-tooltip="{{service.title}}" tooltip-placement="right"  >
+						<a class="clickable" ng-click="controller.changeCurrentServiceHandler(service)">{{ service.title }}
+							<span ng-show="service.service" ng-style="(visible_services.indexOf(service) !== -1 )?{'background-color': service.iconColor}:''" class="icon-image-small pull-right hidden-xs showopacity">{{service.title[0]}}</span>
+							<span ng-show="!service.service" style="font-size:16px;" class="pull-right hidden-xs showopacity glyphicon glyphicon-home"></span>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+	<div class="main">
+		<main-menu></main-menu>
+		<div ng-repeat="service in open_services" ng-class="service_window_size" ng-show="visible_services.indexOf(service) !== -1" >
+			<div class="service-top-bar">
+				<!-- Single button -->
+				<a class="pull-right" ng-click="controller.closeServiceHandler(service)"><i class="fa fa-times-circle text-danger clickable" aria-hidden="true"></i></a>
+				<div class="btn-group pull-right">
+					<a class="btn btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						<span class="hidden-tool-text" style="display:none">View</span>
+						<i class="fa fa-plus-circle clickable" style="color: #0BCC4D; font-size: 14px;" aria-hidden="true"></i>
+					</a>
+					<ul class="dropdown-menu" style="font-size: 10px;">
+						<li><a class="clickable" ng-click="controller.setMaxVisibleServicesHandler(1)"><i class="fa fa-window-maximize" aria-hidden="true"></i> Maximize application</a></li>
+						<li><a class="clickable" ng-click="controller.setMaxVisibleServicesHandler(2)"><i class="fa fa-columns" aria-hidden="true"></i> Divide workspace in 2 applications</a></li>
+						<li><a class="clickable" ng-click="controller.setMaxVisibleServicesHandler(4)"><i class="fa fa-th-large" aria-hidden="true"></i> Divide workspace in 4 applications</a></li>
+					</ul>
+				</div>
+				<a class="pull-right" ng-click="controller.hideServiceHandler(service)"><i class="fa fa-minus-circle clickable" style="color: #FFBD35;" aria-hidden="true"></i></a>
+				<p style="color: white; text-align: center; width: 100%;">{{service.title}}</p>
+			</div>
+			<iframe ng-src="{{controller.trustAsResourceUrl(service)}}" style=" height: 100%; width: 100%; "></iframe>
+		</div>
+	</div>
+	{% endverbatim %}
+</body>
+<script type="text/javascript" src="static/app/app.js"></script>
+<script type="text/javascript" src="static/app/service/controllers/service.controller.js"></script>
+<script type="text/javascript" src="static/app/service/controllers/service-list.service.js"></script>
+<script type="text/javascript" src="static/app/service/controllers/service.dir.js"></script>
+<script type="text/javascript" src="static/app/common/resources/common.js"></script>
+</html>

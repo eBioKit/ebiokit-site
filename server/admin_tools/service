@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#**************************************************************************
+#  This file is part of eBioKit 2017 Admin tools.
+#  Copyright Erik Bongcam-Rudloff Group, SLU, Sweden 2017
+#
+#  This tool updates the configuration for the eBioKit services.
+#
+#  Version: 0.1
+#
+#  Changelog:
+#    - 2017/04/13:  First version
+#
+#  Enjoy the eBioKit and please contact us for any question or suggestion!
+#  --
+#  The eBioKit development team
+#  More info http://ebiokit.eu/
+#  Technical contact ebiokit@gmail.com
+#**************************************************************************
+SERVICE=$1
+COMMAND=$2
+NO_CMD=$3
+
+DIR="$(dirname "$0")"
+
+if [ ! -e $DIR/service_tools/service.py ]; then
+        DIR="$(dirname `readlink $0`)"
+fi
+
+python $DIR/service_tools/service.py $SERVICE $COMMAND $NO_CMD

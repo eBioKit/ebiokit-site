@@ -1,0 +1,30 @@
+<div ng-controller="JobListController as controller">
+	<div class=" admin-section-title-div">
+		<div class="panel-body">
+			<h1>Job queue</h1>
+			<h3>Check the status for all installation in the system</h3>
+		</div>
+	</div>
+	<div class="admin-section-content-div">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<h2>Job status</h2>
+				<div style="display: table; margin: auto; width:830px;">
+					<div>
+						<div style="display:table-row; text-align:center;">
+							<b style="display:table-cell; width: 320px;">Job name</b>
+							<b style="display:table-cell; width: 150px;">Date</b>
+							<b style="display:table-cell; width: 100px;">Status</b>
+							<b style="display:table-cell; width: 180px;">Progress</b>
+							<b style="display:table-cell; width: 60px;">Tools</b>
+						</div>
+					</div>
+					<div class="job-queue">
+						<job-row ng-repeat="job in jobs | orderBy: '-date'" ></job-row>
+						<div style="text-align:center;" ng-if="jobs.length === 0"><h3>No jobs in the queue.</h3></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

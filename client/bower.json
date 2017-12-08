@@ -1,0 +1,22 @@
+{
+  "name": "eBioKit 2016",
+  "description": "Bioinformatics made easy",
+  "main": "server.js",
+  "authors": [
+    "Rafael Hernandez"
+  ],
+  "license": "ISC",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_cache"
+  ],
+  "dependencies": {
+    "angular": "^1.5.7",
+    "angular-ui-router": "^0.3.1",
+		"angular-bootstrap": "^1.3.3",
+		"angular-sanitize": ">=1.5.9",
+		"bootstrap": ">=3.0.0"
+  }
+}

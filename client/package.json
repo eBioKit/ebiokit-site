@@ -1,0 +1,11 @@
+{
+  "name": "ebiokit-site-client",
+  "version": "0.0.1",
+  "description": "The main site for the eBioKit",
+  "main": "app.js",
+  "author": "Rafael Hernandez",
+  "dependencies": {
+    "express": "^4.13.4",
+    "bower": "1.7.9"
+  }
+}
