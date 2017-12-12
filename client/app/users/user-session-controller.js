@@ -100,6 +100,7 @@
 			function successCallback(response){
 				//CLEAN PREVIOUS COOKIES
 				if(response.data.success === true){
+					$dialogs.showSuccessDialog("User account succesfully created.");
 					$scope.isLogin = true;
 				}else{
 					$dialogs.showErrorDialog("Invalid user or email address, perhaps this email account already exists.");

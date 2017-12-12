@@ -1,10 +1,10 @@
 <div ng-controller="UserSessionController as controller" ng-init="isLogin=true;">
 	<form name="signForm" class="form-signin" novalidate ng-submit="controller.signFormSubmitHandler()">
-		<h3 class="form-signin-heading">{{(isLogin)?"Welcome back! Please Sign In":"Create your Galaxy account"}}</h3>
+		<h3 class="form-signin-heading">{{(isLogin)?"Welcome to eBioKit admin site. Please Sign In":"Sign up"}}</h3>
 		<hr class="colorgraph"><br>
 		<div class="well">
-			<p>Start a new session using your eBioKit user and password as usual, or create a new account.</p>
-			<p>You can find more information about user accounts <a href="http://ebiokit.readthedocs.io/en/feature-doc/2_1_users">here</a></p>
+			<p>Please sign in using your eBioKit account, or create a new account.</p>
+			<!-- <p>You can find more information about user accounts <a href="http://ebiokit.readthedocs.io/en/feature-doc/2_1_users">here</a></p> -->
 		</div>
 		<input name="email" type="email" class="form-control" ng-model="userInfo.email" placeholder="Email" required="" autofocus="" />
 		<span>

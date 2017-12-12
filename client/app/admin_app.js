@@ -83,11 +83,18 @@
 				url: '/jobs-queue',
 				templateUrl: "static/app/admin/templates/jobs-queue.tpl.html",
 				data: {requireLogin: true}
+			},
+			settings = {
+				name: 'settings',
+				url: '/settings',
+				templateUrl: "static/app/admin/templates/settings.tpl.html",
+				data: {requireLogin: true}
 			};
 			$stateProvider.state(signin);
 			$stateProvider.state(controlPanel);
 			$stateProvider.state(applicationStore);
 			$stateProvider.state(jobsQueue);
+			$stateProvider.state(settings);
 		}]
 	);
 
@@ -268,7 +275,8 @@
 		$scope.open_services = [
 			{name:"control-panel", title: 'Control panel', description: 'The main eBioKit admin page', icon : 'fa-tachometer'},
 			{name:"application-store", title: 'Application store', description: 'Install, update or remove apps', icon : 'fa-shopping-cart'},
-			{name:"jobs-queue", title: 'Installation status', description: 'Queue for service installation or removing', icon : 'fa-tasks'}
+			{name:"jobs-queue", title: 'Installation status', description: 'Queue for service installation or removing', icon : 'fa-tasks'},
+			{name:"settings", title: 'Settings', description: 'eBioKit server settings', icon : 'fa-sliders'}
 		];
 
 		$scope.visible_services = [$scope.open_services[0]];
