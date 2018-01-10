@@ -194,6 +194,25 @@
 			);
 		};
 
+		this.retrieveSystemSettings = function(){
+			$http($rootScope.getHttpRequestConfig("GET", "system-settings", {})).
+			then(
+				function successCallback(response){
+					$scope.settings = response.data.settings;
+				},
+				function errorCallback(response){
+					$scope.isLoading = false;
+
+					debugger;
+					var message = "Failed while retrieving the system settings.";
+					$dialogs.showErrorDialog(message, {
+						logMessage : message + " at ServiceListController:retrieveSystemSettings."
+					});
+					console.error(response.data);
+				}
+			);
+		};
+
 		/**
 		* This function defines the behaviour for the "filterServices" function.
 		* Given a item (service) and a set of filters, the function evaluates if
@@ -274,6 +293,40 @@
 			this.retrieveServicesListData(true, this, "retrieveAvailableApplications");
 		};
 
+		this.updateSystemSettingsHandler = function(){
+			if($scope.prev_password === "" || $scope.settings.password !== $scope.settings.password2){
+				return;
+			}
+
+			delete $scope.settings.invalid_prev_pass;
+
+			$http($rootScope.getHttpRequestConfig("POST", "system-settings", {
+				data : {
+					"settings" : $scope.settings
+				}
+			})).
+			then(
+				function successCallback(response){
+					$dialogs.showSuccessDialog("Settings were succesfully created.");
+				},
+				function errorCallback(response){
+					$scope.isLoading = false;
+
+					if(response.data.err_code === 404001){
+						$scope.settings.invalid_prev_pass = true;
+						return;
+					}
+
+					debugger;
+					var message = "Failed while saving the system settings.";
+					$dialogs.showErrorDialog(message, {
+						logMessage : message + " at ServiceListController:updateSystemSettingsHandler."
+					});
+					console.error(response.data);
+				}
+			);
+		};
+
 		//--------------------------------------------------------------------
 		// INITIALIZATION
 		//--------------------------------------------------------------------
@@ -345,6 +398,11 @@
 			};
 		} else if($state.current.name === "application-store"){
 			this.retrieveServicesListData(true, this, "retrieveAvailableApplications");
+			// $scope.interval.push($interval(function(){
+			// 	me.retrieveServicesListData(true, me, "retrieveAvailableApplications");
+			// }, 15000));
+		} else if($state.current.name === "settings"){
+			this.retrieveSystemSettings();
 			// $scope.interval.push($interval(function(){
 			// 	me.retrieveServicesListData(true, me, "retrieveAvailableApplications");
 			// }, 15000));

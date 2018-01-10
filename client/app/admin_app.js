@@ -129,6 +129,8 @@
 				return myAppConfig.SERVER_URL + "api/system/session/?admin=1";
 				case "system-info":
 				return myAppConfig.SERVER_URL + "api/system/system-info/";
+				case "system-settings":
+				return myAppConfig.SERVER_URL + "api/system/system-settings/";
 				case "ebiokit-machine-status":
 				return myAppConfig.SERVER_URL + "api/system/ebiokit-machine-status/";
 				case "service-list":

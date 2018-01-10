@@ -7,69 +7,98 @@
 	</div>
 	<div class="admin-section-content-div">
 		<div class="panel panel-default">
-			<div class="panel-body" style="height:350px;">
-				<h2>System information</h2>
+			<div class="panel-body" >
+				<h2>eBioKit server settings</h2>
 				<div style="margin:auto; ">
-					<div style="height:250px; width:30%; float:right;">
-						<div style="margin-top:25px; height:100px;">
-							<canvas class="chart chart-horizontal-bar" chart-data="mem_load" chart-options="mem_options" ></canvas>
-						</div>
-						<div style="margin-top:25px; height:100px;">
-							<canvas class="chart chart-horizontal-bar" chart-data="swap_use" chart-options="swap_options" ></canvas>
-						</div>
+					<div ng-show="settings === undefined">
+						<h3><i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Preparing settings!</h3>
+						<p>We are preparing the settings for the eBioKit, please wait!</p>
 					</div>
-					<div style="height:250px; width:70%; ">
-						<canvas class="chart chart-line"
-						chart-labels="cpu_load_labels" chart-data="cpu_loads" chart-colors="cpu_colors" chart-options="cpu_options" ></canvas>
-					</div>
+					<form ng-show="settings !== undefined" class="form-horizontal">
+						<div class="well well-md text-info">
+							<p><i class="fa fa-info-circle" ></i> Use this section to configure the main settings for your eBioKit server.</p>
+							<p>Use the <i class="fa fa-question-circle" ></i> icon at the right for getting help for any field in the form.</p>
+						</div>
+						<h4>Account settings</h4>
+						<h5>Change your password</h5>
+						<div class="form-group">
+							<label class="control-label col-sm-2" for="password">Previous password:</label>
+							<div class="col-sm-9">
+								<input type="password" class="form-control" id="prev_password" ng-model="settings.prev_password">
+							</div>
+							<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Your current password for your eBioKit account."></i>
+						</div>
+						<div class="form-group" ng-show="settings.invalid_prev_pass">
+							<p class="col-sm-2"></p>
+							<p class="text-danger col-sm-9" >Invalid password</p>
+						</div>
+						<div class="form-group">
+							<label class="control-label col-sm-2" for="password">New Password:</label>
+							<div class="col-sm-9">
+								<input type="password" class="form-control" id="password" ng-model="settings.password">
+							</div>
+							<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="The password for your eBioKit account."></i>
+						</div>
+						<div class="form-group" ng-show="settings.password && settings.password.length < 6">
+							<p class="col-sm-2"></p>
+							<p class="text-danger col-sm-9" >Invalid password. Password must be at least 6 characters.</p>
+						</div>
+						<div class="form-group">
+							<label class="control-label col-sm-2" for="password2">Confirm password:</label>
+							<div class="col-sm-9">
+								<input type="password" class="form-control" id="password2" ng-model="settings.password2">
+							</div>
+							<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Repeat the password."></i>
+						</div>
+						<div class="form-group" ng-show="settings.password !== settings.password2">
+							<p class="col-sm-2"></p>
+							<p class="text-danger col-sm-9" >Passwords do not match!</p>
+						</div>
+						<h4>System settings</h4>
+						<div class="form-group">
+							<label class="control-label col-sm-2" for="ebiokit_password">Password for VM:  </label>
+							<div class="col-sm-9">
+								<input type="text" class="form-control" id="ebiokit_password" ng-model="settings.ebiokit_password" ng-required="true">
+							</div>
+							<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Password for the eBioKit Virtual Machine."></i>
+						</div>
+						<div class="form-group">
+							<label class="control-label col-sm-2" for="ebiokit_host">IP address for VM:  </label>
+							<div class="col-sm-9">
+								<input type="text" class="form-control" id="ebiokit_host" ng-model="settings.ebiokit_host" ng-required="true">
+							</div>
+							<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Local IP address for the eBioKit Virtual Machine."></i>
+						</div>
+						<div class="form-group">
+							<label class="control-label col-sm-2" for="nginx_data_location">NGINX conf files:  </label>
+							<div class="col-sm-9">
+								<input type="text" class="form-control" id="nginx_data_location" ng-model="settings.nginx_data_location" ng-required="true">
+							</div>
+							<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Location for the configuration files for NGINX (reverse proxy server)."></i>
+						</div>
+						<div class="form-group">
+							<label class="control-label col-sm-2" for="ebiokit_data_location">eBioKit data location:  </label>
+							<div class="col-sm-9">
+								<input type="text" class="form-control" id="ebiokit_data_location" ng-model="settings.ebiokit_data_location" ng-required="true">
+							</div>
+							<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Location for the data files for the eBioKit."></i>
+						</div>
+						<div class="form-group">
+							<label class="control-label col-sm-2" for="tmp_dir">Temporal dir:  </label>
+							<div class="col-sm-9">
+								<input type="text" class="form-control" id="tmp_dir" ng-model="settings.tmp_dir" ng-required="true">
+							</div>
+							<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="The directory used for storing temporal files during the installation of new components."></i>
+						</div>
+						<div class="form-group">
+							<div style=" text-align: center; ">
+								<a ng-show="isLoading !== true" class="btn btn-success btn-lg" ng-click="controller.updateSystemSettingsHandler()">Update settings</a>
+								<a ng-show="isLoading === true" disabled class="btn btn-default btn-lg"><i class="fa fa-spinner fa-spin fa-fw"></i> Saving</a>
+							</div>
+						</div>
+					</form>
 				</div>
 			</div>
 		</div>
-	</div>
-</div>
-
-
-<div class="col-md-12">
-	<div class="panel panel-container">
-		<div ng-show="settings === undefined" class="well well-bg">
-			<h1><i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Preparing settings!</h1>
-			<p>We are preparing the settings for the eBioKit, please wait!</p>
-		</div>
-		<form ng-show="settings !== undefined" class="form-horizontal">
-			<h2>eBioKit server settings</h2>
-			<div class="well well-md text-info">
-				<p><i class="fa fa-info-circle" ></i> Use this section to configure the main settings for your eBioKit server.</p>
-				<p>Use the <i class="fa fa-question-circle" ></i> icon at the right for getting help for any field in the form.</p>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="ADMIN_ACCOUNTS">Admin accounts:  </label>
-				<div class="col-sm-9">
-					<input type="text" class="form-control" id="ADMIN_ACCOUNTS" ng-model="settings.ADMIN_ACCOUNTS" ng-required="true">
-				</div>
-				<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Accounts that have administration rights. Use emails separated by commas."></i>
-			</div>
-			<h2>Account settings</h2>
-			<h4>Change password</h4>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="SMTP_PASS">Password:</label>
-				<div class="col-sm-9">
-					<input type="password" class="form-control" id="password" ng-model="settings.password">
-				</div>
-				<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="The password for your eBioKit account."></i>
-			</div>
-			<div class="form-group">
-				<label class="control-label col-sm-2" for="SMTP_PASS">Confirm password:</label>
-				<div class="col-sm-9">
-					<input type="password" class="form-control" id="password2" ng-model="settings.password2">
-				</div>
-				<i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Repeat the password."></i>
-			</div>
-			<div class="form-group">
-				<div style=" text-align: center; ">
-					<a ng-show="isLoading !== true" class="btn btn-success btn-lg" ng-click="controller.updateSettingsHandler()">Update settings</a>
-					<a ng-show="isLoading === true" disabled class="btn btn-default btn-lg"><i class="fa fa-spinner fa-spin fa-fw"></i> Saving</a>
-				</div>
-			</div>
-		</form>
 	</div>
 </div>
