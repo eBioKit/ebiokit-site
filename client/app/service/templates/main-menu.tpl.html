@@ -18,7 +18,7 @@
 			</span>
 		</div>
 		<div ng-show="orderby==='name'" class="main-menu-section">
-			<div class="service-icon" ng-repeat="service in services | filter:filterServices() | filter:{enabled:true}">
+			<div class="service-icon" ng-repeat="service in filteredService = (services | filter:filterServices() | filter:{enabled:true})">
 				<span class="clickable service-icon-tool"><i class="fa fa-question-circle" ng-click="controller.displayHelpHandler(service)" style="margin-top: -3px;"></i> <span class="service-icon-tool-text">Show help</span></span>
 				<div class="service-icon-inner" ng-click="controller.launchServiceHandler(service)">
 					<!-- <i class="fa fa-question-circle service-icon-tool" title="Application information" style="margin-top: 22px;"></i> -->
@@ -27,6 +27,7 @@
 					<span class="icon-name">{{service.title}}</span>
 				</div>
 			</div>
+			<h1 ng-hide="filteredService.length" style="text-align: center; color: #7b7b7b; ">No applications are available in this eBioKit!</h1>
 		</div>
 		<div ng-show="orderby==='category'" class="main-menu-section">
 			<div class="section-body">
@@ -40,7 +41,7 @@
 				</div>
 				<div class="col-sm-10" style="padding: 10px 50px;">
 					<h2 style="color:#333; text-transform: capitalize;">{{categoryFilter[0]}}</h3>
-						<div class="service-icon" ng-repeat="service in services | filter:filterServicesByCategory() | filter:filterServices() | filter:{enabled:true}">
+						<div class="service-icon" ng-repeat="service in filteredService = (services | filter:filterServicesByCategory() | filter:filterServices() | filter:{enabled:true})">
 							<span class="clickable service-icon-tool"><i class="fa fa-question-circle" ng-click="controller.displayHelpHandler(service)" style="margin-top: -3px;"></i> <span class="service-icon-tool-text">Show help</span></span>
 							<div class="service-icon-inner" ng-click="controller.launchServiceHandler(service)">
 								<!-- <i class="fa fa-question-circle service-icon-tool" title="Application information" style="margin-top: 22px;"></i> -->
@@ -49,6 +50,7 @@
 								<span class="icon-name">{{service.title}}</span>
 							</div>
 						</div>
+						<h1 ng-hide="filteredService.length" style="text-align: center; color: #7b7b7b; ">No applications are available in this eBioKit!</h1>
 					</div>
 				</div>
 			</div>

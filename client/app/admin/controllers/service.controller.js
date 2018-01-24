@@ -195,10 +195,18 @@
 		};
 
 		this.retrieveSystemSettings = function(){
+			var me = this;
 			$http($rootScope.getHttpRequestConfig("GET", "system-settings", {})).
 			then(
 				function successCallback(response){
 					$scope.settings = response.data.settings;
+					for(var i in $scope.settings.available_remote_servers){
+						if($scope.settings.available_remote_servers[i].url === $scope.settings.remote_server.url){
+							$scope.settings.remote_server = $scope.settings.available_remote_servers[i];
+						}
+					}
+					$scope.settings.available_remote_servers.push({"name" : "New server", url : ""})
+					me.retrieveSystemVersion();
 				},
 				function errorCallback(response){
 					$scope.isLoading = false;
@@ -213,6 +221,25 @@
 			);
 		};
 
+		this.retrieveSystemVersion = function(){
+			$http($rootScope.getHttpRequestConfig("GET", "system-version", {})).
+			then(
+				function successCallback(response){
+					$scope.settings.latest_version = response.data.latest_version;
+					$scope.settings.system_version = response.data.system_version;
+				},
+				function errorCallback(response){
+					$scope.isLoading = false;
+
+					debugger;
+					var message = "Failed while retrieving the system version.";
+					$dialogs.showErrorDialog(message, {
+						logMessage : message + " at ServiceListController:retrieveSystemVersion."
+					});
+					console.error(response.data);
+				}
+			);
+		};
 		/**
 		* This function defines the behaviour for the "filterServices" function.
 		* Given a item (service) and a set of filters, the function evaluates if
@@ -299,7 +326,7 @@
 			}
 
 			delete $scope.settings.invalid_prev_pass;
-
+			var me = this;
 			$http($rootScope.getHttpRequestConfig("POST", "system-settings", {
 				data : {
 					"settings" : $scope.settings
@@ -307,7 +334,8 @@
 			})).
 			then(
 				function successCallback(response){
-					$dialogs.showSuccessDialog("Settings were succesfully created.");
+					$dialogs.showSuccessDialog("Settings were succesfully created. You may need to log out and log in again to see the changes.");
+					me.retrieveSystemSettings();
 				},
 				function errorCallback(response){
 					$scope.isLoading = false;
@@ -326,6 +354,10 @@
 				}
 			);
 		};
+
+		this.onChangeSelectedRemoteServerHandler = function(){
+			debugger
+		}
 
 		//--------------------------------------------------------------------
 		// INITIALIZATION
@@ -403,9 +435,6 @@
 			// }, 15000));
 		} else if($state.current.name === "settings"){
 			this.retrieveSystemSettings();
-			// $scope.interval.push($interval(function(){
-			// 	me.retrieveServicesListData(true, me, "retrieveAvailableApplications");
-			// }, 15000));
 		}
 	});
 

@@ -131,6 +131,8 @@
 				return myAppConfig.SERVER_URL + "api/system/system-info/";
 				case "system-settings":
 				return myAppConfig.SERVER_URL + "api/system/system-settings/";
+				case "system-version":
+				return myAppConfig.SERVER_URL + "api/system/system-version/";
 				case "ebiokit-machine-status":
 				return myAppConfig.SERVER_URL + "api/system/ebiokit-machine-status/";
 				case "service-list":
@@ -202,6 +204,25 @@
 
 		this.setCurrentPageTitle = function(page){
 			$scope.currentPageTitle = page;
+		};
+
+		this.retrieveSystemVersion = function(){
+			$http($rootScope.getHttpRequestConfig("GET", "system-version", {})).
+			then(
+				function successCallback(response){
+					$rootScope.systemVersion = response.data.system_version;
+				},
+				function errorCallback(response){
+					$scope.isLoading = false;
+
+					debugger;
+					var message = "Failed while retrieving the system version.";
+					$dialogs.showErrorDialog(message, {
+						logMessage : message + " at AdminController:retrieveSystemVersion."
+					});
+					console.error(response.data);
+				}
+			);
 		};
 
 		/******************************************************************************
@@ -288,5 +309,7 @@
 		if($cookies.get("ebiokitsession") !== undefined){
 			$rootScope.isLoggedIn=true;
 		}
+
+		this.retrieveSystemVersion();
 	});
 })();
