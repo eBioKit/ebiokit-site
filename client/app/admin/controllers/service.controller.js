@@ -999,7 +999,7 @@
 				'   </div>' +
 				'   <div class="tasks-list">' +
 				'     <b style="margin-bottom:5px;display: block;">Tasks in job</b>' +
-				'     <p ng-repeat="task in displayed_job.tasks" ng-class="(task.id === selected_task.id)?\'selected\':\'\'">' +
+				'     <p style="margin-left: 8px;" ng-repeat="task in displayed_job.tasks" ng-class="(task.id === selected_task.id)?\'selected\':\'\'">' +
 				'       <a class="clickable" ng-click="controller.getTaskLogHandler(task)">{{task.id + " - " + task.name}}</a>' +
 				'     </p>' +
 				'   </div>' +

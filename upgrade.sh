@@ -7,7 +7,6 @@ echo "Upgrading application code"
 git pull origin minified
 
 echo "Enabling virtualenv at $DIR"
-virtualenv .env
 source .env/bin/activate
 
 echo "Installing requirements"

@@ -4,6 +4,10 @@ PASSWORD=$2
 PLATFORM=$3
 COMMAND=$4
 
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $DIR
+
 if [[ "$PLATFORM" == "LINUX" ]]; then
     if [[ "$COMMAND" == "shutdown" ]]; then
         #turn off machine

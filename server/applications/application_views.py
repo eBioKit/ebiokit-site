@@ -31,7 +31,7 @@ from serializers import ApplicationSerializer
 from django.http import JsonResponse
 from rest_framework.decorators import detail_route
 from rest_framework import renderers
-from os import path as osPath
+from os import path as osPath, access as osAccess, W_OK as osWritable
 from resources.UserSessionManager import UserSessionManager
 from django.conf import settings
 
@@ -122,7 +122,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             mainRemoteServer = RemoteServer.objects.get(enabled=1)
             r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/latest-version")
             if r.status_code != 200:
-                return JsonResponse({'success': False, 'error_message' : 'Unable to retrieve the latest version from ' + mainRemoteServer.name})
+                return JsonResponse({'success': False, 'system_version': APP_VERSION, 'error_message' : 'Unable to retrieve the latest version from ' + mainRemoteServer.name})
             return JsonResponse({'system_version': APP_VERSION, 'latest_version': r.json().get("latest_version")})
         except:
             return JsonResponse({'system_version': APP_VERSION})
@@ -232,9 +232,20 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     def read_settings(self, request):
         settings = request.data.get("settings", {})
+        # Get temporal directory
+        settings["messages"] = {}
         settings["tmp_dir"] = Settings.objects.get(name="tmp_dir").value.rstrip("/") + "/"
+        if not osPath.exists(settings["tmp_dir"]) or not osAccess(settings["tmp_dir"], osWritable):
+            settings["messages"]["tmp_dir"] = "Invalid directory. Check if directory exists and if is writable."
+        # Get data directory
         settings["ebiokit_data_location"] = Settings.objects.get(name="ebiokit_data_location").value.rstrip("/") + "/"
+        if not self.check_valid_data_location(settings["ebiokit_data_location"]):
+            settings["messages"]["ebiokit_data_location"] = "Invalid directory. Check if directory exists, if it is writable and if required subdirectories has been created."
+        # Get nginx directory
         settings["nginx_data_location"] = Settings.objects.get(name="nginx_data_location").value.rstrip("/") + "/"
+        if not osPath.exists(settings["nginx_data_location"]) or not osAccess(settings["nginx_data_location"], osWritable):
+            settings["messages"]["nginx_data_location"] = "Invalid directory. Check if directory exists and if is writable."
+
         settings["ebiokit_host"] = Settings.objects.get(name="ebiokit_host").value
         settings["ebiokit_password"] = Settings.objects.get(name="ebiokit_password").value
         settings["platform"] = Settings.objects.get(name="platform").value
@@ -330,3 +341,21 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                         user.save()
                     except:
                         pass
+
+    def check_valid_data_location(self, data_location):
+        subdir = data_location.rstrip("/") + "/ebiokit-services/uninstallers"
+        if not osPath.exists(subdir) or not osAccess(subdir, osWritable):
+            return False
+        subdir = data_location.rstrip("/") + "/ebiokit-services/launchers"
+        if not osPath.exists(subdir) or not osAccess(subdir, osWritable):
+            return False
+        subdir = data_location.rstrip("/") + "/ebiokit-services/init-scripts"
+        if not osPath.exists(subdir) or not osAccess(subdir, osWritable):
+            return False
+        subdir = data_location.rstrip("/") + "/ebiokit-data"
+        if not osPath.exists(subdir) or not osAccess(subdir, osWritable):
+            return False
+        subdir = data_location.rstrip("/") + "/ebiokit-logs"
+        if not osPath.exists(subdir) or not osAccess(subdir, osWritable):
+            return False
+        return True
