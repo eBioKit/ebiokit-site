@@ -22,7 +22,7 @@ from common import *
 def main(options):
     read_conf()
 
-    if len(options) < 2 or not(options[1] in ["start", "stop", "status", "restart"]):
+    if len(options) < 2 or not(options[1] in ["log", "start", "stop", "status", "restart"]):
         show_help()
 
     # STEP 0. FETCH ALL INSTALLED SERVICES
@@ -47,6 +47,11 @@ def main(options):
         import service_stop as _dispacher
     elif options[1] == "restart":
         import service_restart as _dispacher
+    elif options[1] == "log":
+        if len(options) > 2:
+            params.append("--lines")
+            params.append(str(options[2]).replace("-",""))
+        import service_log as _dispacher
     else: #status
         if len(options) > 2 and options[2] == "--no-cmd":
             params.append("--no-cmd")
@@ -72,9 +77,10 @@ def show_help(message=""):
     print "                      [" + ", ".join(services) + "]"
     print ""
     print "where OPTION includes:"
-    print "   start             Starts the selected services"
-    print "   status            Shows the current status for the selected services (RUNNING, STOPPED,...)"
-    print "   stop              Stops the selected services"
+    print "   log               Print the log for the selected eBioKit service"
+    print "   start             Start the selected services"
+    print "   status            Show the current status for the selected services (RUNNING, STOPPED,...)"
+    print "   stop              Stop the selected services"
     print ""
     exit(1)
 
