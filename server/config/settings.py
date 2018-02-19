@@ -15,7 +15,7 @@ from secret import SECRET_KEY as MY_SECRET_KEY
 # -----------------------------------------------------------------------------------------------------------------------------------------
 # CUSTOM SETTINGS FOR THE APPLICATION
 # -----------------------------------------------------------------------------------------------------------------------------------------
-APP_VERSION = 0.1
+APP_VERSION = 18.02
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
