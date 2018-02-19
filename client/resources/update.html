@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html ng-app="eBioKitMainSiteApp">
+
+<head>
+	<meta charset="utf-8">
+	<title>eBioKit 2016</title>
+	<link href="static/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link href="static/bower_components/bootstrap/dist/css/bootstrap-theme.min.css" rel="stylesheet">
+	<link href="static/css/main.css" rel="stylesheet">
+	<link href="static/css/font-awesome.min.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,600" rel="stylesheet">
+</head>
+
+<body class="home-panel-body">
+	<div style="padding: 30px;width: 100%;background: #fff;">
+		<h1>How to update your eBioKit</h1>
+		<h4>Step 1. Upgrade application code</h4>
+		<p>Go the the location of the eBioKit code and pull the latest version from GitHub.</p>
+		<blockquote>
+			<p>cd /your/ebiokit/app/location/</p>
+			<p>git pull origin minified</p>
+		</blockquote>
+		<h4>Step 2. Install missing python packages (if any)</h4>
+		<p>Activate virtualenv (if using) and install the new Python packages using <code>pip</code>.</p>
+		<blockquote>
+			<p>source .env/bin/activate</p>
+			<p>pip install -r requirements.txt</p>
+		</blockquote>
+		<h4>Step 3. Finally, upgrade the databases</h4>
+		<p>Run the following command and Django will automatically upgrade the database.</p>
+		<blockquote>
+			<p>cd server</p>
+			<p>python manage.py makemigrations</p>
+			<p>python manage.py migrate</p>
+		</blockquote>
+		<h4>Done! Your system should be now upgraded to latest version!</h4>
+		<hr>
+		<h4>Enjoy the eBioKit and please contact us for any question or suggestion!</h4>
+		<p>
+			—<br> The eBioKit development team (<a href="mailto:ebiokit@gmail.com">ebiokit@gmail.com</a>).
+		</p>
+		<p style="text-align: center;"><img src="/static/img/ebiokit_logo_200x200.png" alt="ebiokit_logo"></p>
+	</div>
+</body>
+
+</html>

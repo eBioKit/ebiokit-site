@@ -48,6 +48,19 @@ available_applications = ApplicationViewSet.as_view({
     'get': 'available_applications'
 }, renderer_classes=[renderers.JSONRenderer])
 
+system_version = ApplicationViewSet.as_view({
+    'get': 'system_version'
+}, renderer_classes=[renderers.JSONRenderer])
+
+version = ApplicationViewSet.as_view({
+    'get': 'get_app_version'
+}, renderer_classes=[renderers.JSONRenderer])
+
+system_settings = ApplicationViewSet.as_view({
+    'get': 'get_settings',
+    'post': 'update_app_settings'
+}, renderer_classes=[renderers.JSONRenderer])
+
 application_list = ApplicationViewSet.as_view({
     'get': 'list',
     'post': 'create'
@@ -132,6 +145,9 @@ urlpatterns = [
     url(r'^session/$', sessions, name='sessions'),
     url(r'^available-updates/$', available_updates, name='available-updates'),
     url(r'^available-applications/$', available_applications, name='available-applications'),
+    url(r'^system-version/$', system_version, name='system-version'),
+    url(r'^version/$', version, name='version'),
+    url(r'^system-settings/$', system_settings, name='system-settings'),
     url(r'^$', application_list, name='application-list'),
     url(r'^(?P<instance_name>.+)/status/$', application_status, name='application-status'),
     url(r'^(?P<instance_name>.+)/start/$', application_start, name='application-start'),

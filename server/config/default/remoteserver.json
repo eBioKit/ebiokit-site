@@ -1,0 +1,1 @@
+[{"model": "applications.remoteserver", "pk": 1, "fields": {"name": "Local", "url": "http://localhost:9090/", "enabled": false}}, {"model": "applications.remoteserver", "pk": 2, "fields": {"name": "eBioKit official", "url": "http://77.235.253.230/", "enabled": true}}]

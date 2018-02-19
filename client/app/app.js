@@ -90,6 +90,8 @@
 		$rootScope.getRequestPath = function(service, extra){
 			extra = (extra || "");
 			switch (service) {
+				case "system-version":
+				return myAppConfig.SERVER_URL + "api/system/system-version/";
 				case "service-list":
 				return myAppConfig.SERVER_URL + "api/applications/";
 				case "service-info":
@@ -129,6 +131,25 @@
 
 		this.setCurrentPageTitle = function(page){
 			$scope.currentPageTitle = page;
+		};
+
+		this.retrieveSystemVersion = function(){
+			$http($rootScope.getHttpRequestConfig("GET", "system-version", {})).
+			then(
+				function successCallback(response){
+					$rootScope.systemVersion = response.data.system_version;
+				},
+				function errorCallback(response){
+					$scope.isLoading = false;
+
+					debugger;
+					var message = "Failed while retrieving the system version.";
+					$dialogs.showErrorDialog(message, {
+						logMessage : message + " at AdminController:retrieveSystemVersion."
+					});
+					console.error(response.data);
+				}
+			);
 		};
 
 		this.getVisibleWindowsSize = function(){
@@ -285,5 +306,8 @@
 		$scope.visible_services = [$scope.open_services[0]];
 		$scope.max_visible_services = 1;
 		$scope.service_window_size = this.getVisibleWindowsSize();
+
+		this.retrieveSystemVersion();
+
 	});
 })();

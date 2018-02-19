@@ -47,10 +47,10 @@ from django.views.generic.base import TemplateView
 
 urlpatterns = [
     url(r'^$', TemplateView.as_view(template_name="index.html"), name='index'),
-    url(r'^home$', TemplateView.as_view(template_name="home.html"), name='home'),
+    url(r'^home$', TemplateView.as_view(template_name="resources/home.html"), name='home'),
+    url(r'^update$', TemplateView.as_view(template_name="resources/update.html"), name='update'),
     url(r'^admin$', TemplateView.as_view(template_name="admin.html"), name='admin'),
     url(r'^api/system/', include('applications.urls')),
     url(r'^api/applications/', include('applications.urls')),
     url(r'^back/', admin.site.urls),
 ]
-

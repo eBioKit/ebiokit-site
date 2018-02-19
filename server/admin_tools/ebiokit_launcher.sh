@@ -4,6 +4,10 @@ PASSWORD=$2
 PLATFORM=$3
 COMMAND=$4
 
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $DIR
+
 if [[ "$PLATFORM" == "LINUX" ]]; then
     if [[ "$COMMAND" == "shutdown" ]]; then
         #turn off machine
@@ -105,7 +109,13 @@ if [[ "$PLATFORM" == "LINUX" ]]; then
         SERVICE=$5
         COMMAND="docker-compose -f /ebiokit_services/launchers/${SERVICE}/docker-compose.yml restart -d"
         sshpass -p $PASSWORD ssh ebiokit@${HOST} $COMMAND 2>> ../log/error.log >> ../log/services.log
+      elif [[ "$COMMAND" == "service log" ]]; then
+        LINES=$5
+        SERVICE=$6
+        COMMAND="docker-compose -f /ebiokit_services/launchers/${SERVICE}/docker-compose.yml logs | tail -$LINES"
+        sshpass -p $PASSWORD ssh ebiokit@${HOST} $COMMAND
     else
+        echo $COMMAND
         sshpass -p $PASSWORD ssh ebiokit@${HOST} $COMMAND
     fi
 fi

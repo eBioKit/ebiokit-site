@@ -194,6 +194,52 @@
 			);
 		};
 
+		this.retrieveSystemSettings = function(){
+			var me = this;
+			$http($rootScope.getHttpRequestConfig("GET", "system-settings", {})).
+			then(
+				function successCallback(response){
+					$scope.settings = response.data.settings;
+					for(var i in $scope.settings.available_remote_servers){
+						if($scope.settings.available_remote_servers[i].url === $scope.settings.remote_server.url){
+							$scope.settings.remote_server = $scope.settings.available_remote_servers[i];
+						}
+					}
+					$scope.settings.available_remote_servers.push({"name" : "New server", url : ""})
+					me.retrieveSystemVersion();
+				},
+				function errorCallback(response){
+					$scope.isLoading = false;
+
+					debugger;
+					var message = "Failed while retrieving the system settings.";
+					$dialogs.showErrorDialog(message, {
+						logMessage : message + " at ServiceListController:retrieveSystemSettings."
+					});
+					console.error(response.data);
+				}
+			);
+		};
+
+		this.retrieveSystemVersion = function(){
+			$http($rootScope.getHttpRequestConfig("GET", "system-version", {})).
+			then(
+				function successCallback(response){
+					$scope.settings.latest_version = response.data.latest_version;
+					$scope.settings.system_version = response.data.system_version;
+				},
+				function errorCallback(response){
+					$scope.isLoading = false;
+
+					debugger;
+					var message = "Failed while retrieving the system version.";
+					$dialogs.showErrorDialog(message, {
+						logMessage : message + " at ServiceListController:retrieveSystemVersion."
+					});
+					console.error(response.data);
+				}
+			);
+		};
 		/**
 		* This function defines the behaviour for the "filterServices" function.
 		* Given a item (service) and a set of filters, the function evaluates if
@@ -274,6 +320,45 @@
 			this.retrieveServicesListData(true, this, "retrieveAvailableApplications");
 		};
 
+		this.updateSystemSettingsHandler = function(){
+			if($scope.prev_password === "" || $scope.settings.password !== $scope.settings.password2){
+				return;
+			}
+
+			delete $scope.settings.invalid_prev_pass;
+			var me = this;
+			$http($rootScope.getHttpRequestConfig("POST", "system-settings", {
+				data : {
+					"settings" : $scope.settings
+				}
+			})).
+			then(
+				function successCallback(response){
+					$dialogs.showSuccessDialog("Settings were succesfully created. You may need to log out and log in again to see the changes.");
+					me.retrieveSystemSettings();
+				},
+				function errorCallback(response){
+					$scope.isLoading = false;
+
+					if(response.data.err_code === 404001){
+						$scope.settings.invalid_prev_pass = true;
+						return;
+					}
+
+					debugger;
+					var message = "Failed while saving the system settings.";
+					$dialogs.showErrorDialog(message, {
+						logMessage : message + " at ServiceListController:updateSystemSettingsHandler."
+					});
+					console.error(response.data);
+				}
+			);
+		};
+
+		this.onChangeSelectedRemoteServerHandler = function(){
+			debugger
+		}
+
 		//--------------------------------------------------------------------
 		// INITIALIZATION
 		//--------------------------------------------------------------------
@@ -348,6 +433,8 @@
 			// $scope.interval.push($interval(function(){
 			// 	me.retrieveServicesListData(true, me, "retrieveAvailableApplications");
 			// }, 15000));
+		} else if($state.current.name === "settings"){
+			this.retrieveSystemSettings();
 		}
 	});
 
@@ -912,7 +999,7 @@
 				'   </div>' +
 				'   <div class="tasks-list">' +
 				'     <b style="margin-bottom:5px;display: block;">Tasks in job</b>' +
-				'     <p ng-repeat="task in displayed_job.tasks" ng-class="(task.id === selected_task.id)?\'selected\':\'\'">' +
+				'     <p style="margin-left: 8px;" ng-repeat="task in displayed_job.tasks" ng-class="(task.id === selected_task.id)?\'selected\':\'\'">' +
 				'       <a class="clickable" ng-click="controller.getTaskLogHandler(task)">{{task.id + " - " + task.name}}</a>' +
 				'     </p>' +
 				'   </div>' +

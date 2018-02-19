@@ -54,7 +54,10 @@
 						</div>
 					</div>
 				</div>
-				<service-store-row ng-repeat="service in services | filter:filterServices()"></service-store-row>
+				<service-store-row ng-repeat="service in services | filter:filterServices() as filtered"></service-store-row>
+				<h2 style="text-align: center; margin-top: 50px; color: #dadada; text-shadow: 0px 0px 17px #f1f1f1;" ng-if="displayServices==='installed' && filtered.length === 0">No services are installed</h2>
+				<h2 style="text-align: center; margin-top: 50px; color: #dadada; text-shadow: 0px 0px 17px #f1f1f1;"ng-if="displayServices==='all' && filtered.length === 0">No services are available</h2>
+				<h2 style="text-align: center; margin-top: 50px; color: #dadada; text-shadow: 0px 0px 17px #f1f1f1;"ng-if="displayServices==='updates' && filtered.length === 0">No updates are available</h2>
 			</div>
 		</div>
 	</div>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html ng-app="eBioKitMainSiteApp">
+
 <head>
 	<meta charset="utf-8">
 	<title>eBioKit admin 2016</title>
@@ -22,39 +23,40 @@
 	<script type="text/javascript" src="static/bower_components/angular-cookies/angular-cookies.min.js"></script>
 	<script type="text/javascript" src="static/app/common/resources/common.js"></script>
 	<script type="text/javascript">
-	function htmlbodyHeightUpdate(){
-		var height3 = $( window ).height()
-		var height1 = $('.nav').height()+50
-		height2 = $('.main').height()
-		if(height2 > height3){
-			$('html').height(Math.max(height1,height3,height2)+10);
-			$('body').height(Math.max(height1,height3,height2)+10);
-		}
-		else
-		{
-			$('html').height(Math.max(height1,height3,height2));
-			$('body').height(Math.max(height1,height3,height2));
-		}
-	}
-	$(document).ready(function () {
-		htmlbodyHeightUpdate()
-		$( window ).resize(function() {
-			htmlbodyHeightUpdate()
-		});
-		$( window ).scroll(function() {
+		function htmlbodyHeightUpdate() {
+			var height3 = $(window).height()
+			var height1 = $('.nav').height() + 50
 			height2 = $('.main').height()
+			if (height2 > height3) {
+				$('html').height(Math.max(height1, height3, height2) + 10);
+				$('body').height(Math.max(height1, height3, height2) + 10);
+			} else {
+				$('html').height(Math.max(height1, height3, height2));
+				$('body').height(Math.max(height1, height3, height2));
+			}
+		}
+		$(document).ready(function() {
 			htmlbodyHeightUpdate()
+			$(window).resize(function() {
+				htmlbodyHeightUpdate()
+			});
+			$(window).scroll(function() {
+				height2 = $('.main').height()
+				htmlbodyHeightUpdate()
+			});
 		});
-	});
 	</script>
 	<style>
-		.panel{padding: 20px 40px; border-radius: 0;}
+		.panel {
+			padding: 20px 40px;
+			border-radius: 0;
+		}
 	</style>
 </head>
+
 <body ng-controller="AdminController as controller">
 	{% verbatim %}
-	<a class="btn btn-danger" ng-show="isLoggedIn" ng-controller="UserSessionController as controller" ng-click="controller.signOutButtonHandler()" style="position: absolute; z-index: 9999; margin: 10px 65px; right: 0; "><i class="fa fa-sign-out" aria-hidden="true"></i> Log out</a>
-	<nav class="navbar navbar-inverse sidebar" ng-class="collapsedBar"role="navigation" ng-mouseenter="controller.uncollapseMenuHandler()" ng-mouseleave="controller.collapseMenuHandler()">
+	<nav class="navbar navbar-inverse sidebar" ng-class="collapsedBar" role="navigation" ng-mouseenter="controller.uncollapseMenuHandler()" ng-mouseleave="controller.collapseMenuHandler()">
 		<div class="container-fluid">
 			<!-- Brand and toggle get grouped for better mobile display -->
 			<div class="navbar-header">
@@ -73,16 +75,21 @@
 			<!-- Collect the nav links, forms, and other content for toggling -->
 			<div class="collapse navbar-collapse" id="bs-sidebar-navbar-collapse-1">
 				<ul class="nav navbar-nav" style="width: 100%;">
-					<li ng-repeat="service in open_services" ng-class="(visible_services.indexOf(service) !== -1 )?'active':''"  uib-tooltip="{{service.title}}" tooltip-placement="right"  >
+					<li ng-repeat="service in open_services" ng-class="(visible_services.indexOf(service) !== -1 )?'active':''" uib-tooltip="{{service.title}}" tooltip-placement="right">
 						<a class="clickable" ng-click="controller.changeCurrentServiceHandler(service)">{{ service.title }}
 							<span style="font-size:16px;" class="pull-right hidden-xs showopacity fa" ng-class="service.icon"></span>
 						</a>
 					</li>
 				</ul>
 			</div>
+			<p class="version">{{ 'v' + systemVersion }}</p>
 		</div>
 	</nav>
 	<div class="main" style="overflow-y: scroll;">
+		<nav style="position: absolute; z-index: 9999; margin: 10px 25px; right: 0; ">
+			<a class="btn btn-sm btn-info" href="/" target="_blank" style=" margin-right: 10px; "><i class="fa fa-external-link" aria-hidden="true"></i> Go to front page</a>
+			<a class="btn btn-sm btn-danger" ng-show="isLoggedIn" ng-controller="UserSessionController as controller" ng-click="controller.signOutButtonHandler()"><i class="fa fa-sign-out" aria-hidden="true"></i> Log out</a>
+		</nav>
 		<div ui-view></div>
 	</div>
 	{% endverbatim %}
@@ -95,4 +102,5 @@
 <script type="text/javascript" src="static/app/users/user-session-controller.js"></script>
 <script type="text/javascript" src="static/app/admin/controllers/service.dir.js"></script>
 <script type="text/javascript" src="static/app/common/resources/common.js"></script>
+
 </html>
