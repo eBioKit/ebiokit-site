@@ -172,7 +172,7 @@
 			//if it is a ip address
 			if (service.port && (document.location.hostname === "localhost" || /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(document.location.hostname))){
 				var port  = service.port.split(",")[0];
-				return document.location.origin.replace(":" + document.location.port, "")  + ":" + port;
+				return document.location.origin.replace(new RegExp(":" + document.location.port + "$"), "")  + ":" + port;
 			}else if(service.website != null || service.website !== ""){
 				return service.website;
 			}else{
