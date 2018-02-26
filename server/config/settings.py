@@ -18,7 +18,7 @@ from secret import SECRET_KEY as MY_SECRET_KEY
 APP_VERSION = 18.02
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------------------------------------------------------------
@@ -68,22 +68,24 @@ ROOT_URLCONF = 'urls'
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT=(os.path.join(BASE_DIR, 'static'))
-
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, '../client/dist')
-]
+if DEBUG:
+    FRONTEND_ROOT = (os.path.join(BASE_DIR, '../client'))
+    STATICFILES_DIRS = [FRONTEND_ROOT]
+    TEMPLATE_DIRS = [FRONTEND_ROOT]
+else:
+    STATIC_ROOT= os.path.join(BASE_DIR, 'static')
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, '../client/dist')]
+    TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'static')],
+        'DIRS':  TEMPLATE_DIRS,
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

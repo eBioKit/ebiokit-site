@@ -23,13 +23,13 @@ echo "Creating superuser for Django server"
 python manage.py createsuperuser
 
 echo "Creating required directories"
-mkdir -p /data/ebiokit/nginx/sites-enabled/conf/
-mkdir -p /data/ebiokit/ebiokit_components/ebiokit-data
-mkdir -p /data/ebiokit/ebiokit_components/ebiokit-logs
-mkdir -p /data/ebiokit/ebiokit_components/ebiokit-services/init-scripts
-mkdir -p /data/ebiokit/ebiokit_components/ebiokit-services/launchers
-mkdir -p /data/ebiokit/ebiokit_components/ebiokit-services/uninstallers
-cp config/default/main-site.* /data/ebiokit/nginx/sites-enabled/conf/
+mkdir -p /data/ebiokit-data/nginx/sites-enabled/conf/
+mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-data
+mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-logs
+mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/init-scripts
+mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/launchers
+mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/uninstallers
+cp config/default/main-site.* /data/ebiokit-data/nginx/sites-enabled/conf/
 
 echo "Please download the eBioKit virtual machine from ftp://ftpuser@77.235.253.230/ebiokit-original.tar.gz"
 echo "and import the machine in VirtualBox"
