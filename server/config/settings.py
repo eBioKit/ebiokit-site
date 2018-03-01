@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
-from secret import SECRET_KEY as MY_SECRET_KEY
 # -----------------------------------------------------------------------------------------------------------------------------------------
 # CUSTOM SETTINGS FOR THE APPLICATION
 # -----------------------------------------------------------------------------------------------------------------------------------------
@@ -32,7 +31,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = MY_SECRET_KEY
+SECRET_KEY = '7lz@37jh0zojm%b^$dmi_5)z&bm4qeld^!s8ye)3=l7keg)jce'
+if not DEBUG:
+    with open('/etc/ebiokit_secretkey.txt') as f:
+        SECRET_KEY = f.read().strip()
 
 ALLOWED_HOSTS = ['*']
 
