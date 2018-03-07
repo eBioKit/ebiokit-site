@@ -124,9 +124,7 @@
 };
 
 this.signOutButtonHandler = function () {
-	$cookies.remove("ebiokitsession", {path: getPathname()});
 	delete $scope.userInfo.email;
-	$state.go('signin');
 
 	$http($rootScope.getHttpRequestConfig("DELETE","session-rest", {
 		data : {
@@ -135,8 +133,15 @@ this.signOutButtonHandler = function () {
 	}
 )).then(
 	function successCallback(response){
+		$cookies.remove("ebiokitsession", {path: getPathname()});
+		$state.go('signin');
+		window.location.reload()
 	},
 	function errorCallback(response){
+		$cookies.remove("ebiokitsession", {path: getPathname()});
+		$state.go('signin');
+		window.location.reload()
+		
 		var message = "Failed during sign-out process.";
 		$dialogs.showErrorDialog(message, {
 			logMessage : message + " at UserSessionController:signOutButtonHandler."
