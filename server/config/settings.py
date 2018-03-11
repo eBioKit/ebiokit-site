@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
-from secret import SECRET_KEY as MY_SECRET_KEY
 # -----------------------------------------------------------------------------------------------------------------------------------------
 # CUSTOM SETTINGS FOR THE APPLICATION
 # -----------------------------------------------------------------------------------------------------------------------------------------
@@ -32,9 +31,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = MY_SECRET_KEY
+SECRET_KEY = '7lz@37jh0zojm%b^$dmi_5)z&bm4qeld^!s8ye)3=l7keg)jce'
+if not DEBUG:
+    with open('/etc/ebiokit_secretkey.txt') as f:
+        SECRET_KEY = f.read().strip()
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -67,18 +69,25 @@ ROOT_URLCONF = 'urls'
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
-FRONTEND_ROOT = (os.path.join(BASE_DIR, '../client'))
+
+if DEBUG:
+    FRONTEND_ROOT = (os.path.join(BASE_DIR, '../client'))
+    STATICFILES_DIRS = [FRONTEND_ROOT]
+    TEMPLATE_DIRS = [FRONTEND_ROOT]
+else:
+    STATIC_ROOT= os.path.join(BASE_DIR, 'static')
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, '../client/dist')]
+    TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'static')]
+
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-STATICFILES_DIRS = [FRONTEND_ROOT]
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [FRONTEND_ROOT],
+        'DIRS':  TEMPLATE_DIRS,
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

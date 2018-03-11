@@ -92,8 +92,8 @@ class UserViewSet(viewsets.ModelViewSet):
     def sign_out(self, request):
         try:
             # STEP 0. CHECK IF USER IS VALID
-            if request.COOKIES.get('session_token') != None:
-                UserSessionManager().close_session(request.COOKIES.get('session_token'))
+            if request.COOKIES.get('ebiokitsession') != None:
+                UserSessionManager().close_session(request.COOKIES.get('ebiokitsession'))
             return JsonResponse({'success': True})
         except Exception as ex:
             return JsonResponse({'success': False, 'other': {'error_message': ex.message}})

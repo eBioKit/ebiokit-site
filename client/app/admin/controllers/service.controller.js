@@ -374,8 +374,8 @@
 			this.retrieveServicesListData(true);
 			this.retrieveSystemInfo();
 			this.retrieveEbiokitMachineStatus();
-			$scope.interval.push($interval(this.retrieveSystemInfo, 1000));
-			$scope.interval.push($interval(this.updateServicesInfo, 60000));
+			$scope.interval.push($interval(this.retrieveSystemInfo, 5000));
+			$scope.interval.push($interval(this.updateServicesInfo, 30000));
 
 			$scope.cpu_loads = [[0,0,0,0,0,0,0,0,0,0]];
 			$scope.cpu_load_labels = ["", "", "", "", "", "", "", "", "", ""];
