@@ -1,0 +1,1 @@
+(function(){var app=angular.module("services.directives.service-directives",[]);app.directive("mainMenu",function(){return{restrict:"E",templateUrl:"static/app/service/templates/main-menu.tpl.html"}})})();
