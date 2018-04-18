@@ -49,6 +49,7 @@ class Queue:
         self.tasks = {}
         self.workers = []
         self.timer = None
+        self.id = self.get_random_id()
 
     def start_worker(self, n_workers=1):
         ids = []

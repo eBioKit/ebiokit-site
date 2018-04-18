@@ -17,6 +17,9 @@ cd $DIR
 echo "Installing requirements"
 pip install -r requirements.txt
 
+echo "Creating SECRET_KEY file at /etc/ebiokit_secretkey.txt"
+python -c 'import random; import string; print "".join([random.SystemRandom().choice(string.digits + string.letters + string.punctuation) for i in range(100)])' | sudo tee /etc/ebiokit_secretkey.txt
+
 echo "Preparing database"
 cd server/
 python manage.py migrate
@@ -34,9 +37,6 @@ mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/launchers
 mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/uninstallers
 cp config/default/uwsgi_params /data/ebiokit-data/nginx/uwsgi_params
 cp config/default/uwsgi.ini /data/ebiokit-data/nginx/uwsgi.ini
-
-echo "Creating SECRET_KEY file at /etc/ebiokit_secretkey.txt"
-python -c 'import random; import string; print "".join([random.SystemRandom().choice(string.digits + string.letters + string.punctuation) for i in range(100)])' | sudo tee /etc/ebiokit_secretkey.txt
 
 echo "Please download the eBioKit virtual machine from ftp://ftpuser@77.235.253.230/ebiokit-original.tar.gz"
 echo "and import the machine in VirtualBox"
