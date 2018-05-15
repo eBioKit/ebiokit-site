@@ -29,21 +29,6 @@
 			<div class="panel-body" >
 				<h2>Services management</h2>
 				<a class="clickable" ng-click="controller.updateServicesInfo();" style=" float: right;"><i class="fa fa-refresh"></i> Refresh list</a>
-				<div style="font-size: 16px; margin-left: 6px;">
-					<b style=" margin-right: 10px; ">eBioKit machine status: </b>
-					<span ng-show="isLoading">
-						<i class="fa fa-spinner fa-pulse fa-fw"></i> Checking status
-					</span>
-					<span ng-show="!isLoading && ebiokit_machine_status === 'RUNNING'">
-						<i class="fa fa-circle text-success"></i> Running
-					</span>
-					<span ng-show="!isLoading && ebiokit_machine_status !== 'RUNNING'">
-						<i class="fa fa-circle text-danger"></i> Not running
-						<a class="clickable" style="margin-left: 10px;" ng-click="controller.sendStartEbiokitMachine()">
-							<i class="fa fa-play text-success"></i> Start
-						</a>
-					</span>
-				</div>
 				<table class="table">
 					<thead>
 						<tr style="text-align:center;">

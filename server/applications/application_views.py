@@ -62,24 +62,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         })
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
-    def ebiokit_machine_status(self, request):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-        settings = self.read_settings(request)
-        command = "status"
-        command = osPath.join(osPath.dirname(osPath.realpath(__file__)), '../admin_tools/ebiokit_launcher.sh') + ' "' + settings.get("ebiokit_host") + '" "' + settings.get("ebiokit_password") + '" "' + settings.get("platform") + '" "' + command + '"'
-        output = subprocess.check_output(['bash', '-c', command])
-        return JsonResponse({'ebiokit_machine_status': output.rstrip()})
-
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
-    def ebiokit_machine_start(self, request):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-        settings = self.read_settings(request)
-        command = "startup"
-        command = osPath.join(osPath.dirname(osPath.realpath(__file__)), '../admin_tools/ebiokit_launcher.sh') + ' "' + settings.get("ebiokit_host") + '" "' + settings.get("ebiokit_password") + '" "' + settings.get("platform") + '" "' + command + '"'
-        output = subprocess.check_output(['bash', '-c', command])
-        return JsonResponse({'success': "true"})
-
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
     def available_updates(self, request, name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -246,8 +228,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         if not osPath.exists(settings["nginx_data_location"]) or not osAccess(settings["nginx_data_location"], osWritable):
             settings["messages"]["nginx_data_location"] = "Invalid directory. Check if directory exists and if is writable."
 
-        settings["ebiokit_host"] = Settings.objects.get(name="ebiokit_host").value
-        settings["ebiokit_password"] = Settings.objects.get(name="ebiokit_password").value
         settings["platform"] = Settings.objects.get(name="platform").value
 
         remote_servers = RemoteServer.objects.values()
@@ -280,16 +260,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         prev_value = Settings.objects.get(name="nginx_data_location")
         if settings["nginx_data_location"] != "" and settings["nginx_data_location"] != prev_value.value.rstrip("/") + "/":
             prev_value.value = settings["nginx_data_location"].rstrip("/") + "/"
-            prev_value.save()
-
-        prev_value = Settings.objects.get(name="ebiokit_host")
-        if settings["ebiokit_host"] != "" and settings["ebiokit_host"] != prev_value.value:
-            prev_value.value = settings["ebiokit_host"]
-            prev_value.save()
-
-        prev_value = Settings.objects.get(name="ebiokit_password")
-        if settings["ebiokit_password"] != "" and settings["ebiokit_password"] != prev_value.value:
-            prev_value.value = settings["ebiokit_password"]
             prev_value.save()
 
         prev_value = Settings.objects.get(name="platform")

@@ -52,7 +52,7 @@ class JobViewSet(viewsets.ModelViewSet):
     #- MANIPULATE INSTALLED SERVICES
     #---------------------------------------------------------------
     @detail_route(renderer_classes=[renderers.JSONRenderer])
-    def prepareInstall(self, request, instance_name=None):
+    def prepare_install(self, request, instance_name=None):
         """
         This function retrieves from the centralhub the installation settings for a given service (i.e. the content for
         the form that we use to configure the service: name, port, etc.)
@@ -78,7 +78,7 @@ class JobViewSet(viewsets.ModelViewSet):
         return JsonResponse({'success': True, 'settings' : r.json().get("settings"), "invalid_options" : invalid_options})
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
-    def prepareUpgrade(self, request, instance_name=None):
+    def prepare_upgrade(self, request, instance_name=None):
         """
         This function retrieves from the centralhub the upgrading settings for a given service (i.e. the content for
         the form that we use to configure the service: name, port, etc.)
@@ -123,10 +123,6 @@ class JobViewSet(viewsets.ModelViewSet):
 
         settings = self.read_settings(request)
 
-        # Step 0. Check machine status
-        if not self.isValidMachineStatus(settings):
-            return JsonResponse({'success': False, 'error_message': "eBioKit machine is unreachable. Perhaps it is not running?"})
-
         # Step 1. Get the installation instructions from the centralhub
         mainRemoteServer = RemoteServer.objects.get(enabled=1)
         r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/" + instance_name + "/install")
@@ -140,7 +136,7 @@ class JobViewSet(viewsets.ModelViewSet):
         # Step 2. Create a new instance of job and register it in the database.
         job = Job()
         job.name = instructions.get("job_name")
-        job.id = self.getNewJobID()
+        job.id = self.get_new_job_id()
         job.date = datetime.datetime.now().strftime("%Y%m%d%H%M")
         job.save()
 
@@ -200,10 +196,6 @@ class JobViewSet(viewsets.ModelViewSet):
 
         settings = self.read_settings(request)
 
-        #Step 0. Check machine status
-        if not self.isValidMachineStatus(settings):
-            return JsonResponse({'success': False, 'error_message': "eBioKit machine is unreachable. Perhaps it is not running?"})
-
         #Step 1. Get all services from remote server
         mainRemoteServer = RemoteServer.objects.get(enabled=1)
         candidate = request.data.get("candidate")
@@ -216,7 +208,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
         job = Job()
         job.name = instructions.get("job_name")
-        job.id = self.getNewJobID()
+        job.id = self.get_new_job_id()
         job.date = datetime.datetime.now().strftime("%Y%m%d%H%M")
         job.save()
 
@@ -270,10 +262,6 @@ class JobViewSet(viewsets.ModelViewSet):
 
         settings = self.read_settings(request)
 
-        #Step 0. Check machine status
-        if not self.isValidMachineStatus(settings):
-            return JsonResponse({'success': False, 'error_message': "eBioKit machine is unreachable. Perhaps it is not running?"})
-
         service = Application.objects.filter(instance_name=instance_name)[:1]
 
         if (len(service) == 0):
@@ -285,7 +273,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
         job = Job()
         job.name = instructions.get("job_name")
-        job.id = self.getNewJobID()
+        job.id = self.get_new_job_id()
         job.date = datetime.datetime.now().strftime("%Y%m%d%H%M")
         job.save()
 
@@ -330,7 +318,7 @@ class JobViewSet(viewsets.ModelViewSet):
         return JsonResponse({'success': True, 'job_id': job.id})
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
-    def checkJobStatus(self, request, id=None):
+    def check_job_status(self, request, id=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
         jobs = Job.objects.all()
@@ -381,9 +369,8 @@ class JobViewSet(viewsets.ModelViewSet):
 
         return JsonResponse({'success': True, 'jobs' : jobs_list})
 
-
     @detail_route(renderer_classes=[renderers.JSONRenderer])
-    def getJobLog(self, request, id=None):
+    def get_job_log(self, request, id=None):
         settings = self.read_settings(request)
         job_id = id.split("_")[0]
         task_id = id
@@ -398,7 +385,7 @@ class JobViewSet(viewsets.ModelViewSet):
         return JsonResponse({'success': True, 'log' : content})
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
-    def deleteJob(self, request, id=None):
+    def delete_job(self, request, id=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
         job_instance = Job.objects.filter(id=id)[0]
@@ -419,7 +406,7 @@ class JobViewSet(viewsets.ModelViewSet):
     #- OTHER FUNCTIONS
     #---------------------------------------------------------------
 
-    def getNewJobID(self):
+    def get_new_job_id(self):
         #RANDOM GENERATION OF THE JOB ID
         #TODO: CHECK IF NOT EXISTING ID
         import string, random
@@ -432,8 +419,6 @@ class JobViewSet(viewsets.ModelViewSet):
         settings["tmp_dir"] = Settings.objects.get(name="tmp_dir").value.rstrip("/") + "/"
         settings["ebiokit_data_location"] = Settings.objects.get(name="ebiokit_data_location").value.rstrip("/") + "/"
         settings["nginx_data_location"] = Settings.objects.get(name="nginx_data_location").value.rstrip("/") + "/"
-        settings["ebiokit_host"] = Settings.objects.get(name="ebiokit_host").value
-        settings["ebiokit_password"] = Settings.objects.get(name="ebiokit_password").value
         settings["platform"] = Settings.objects.get(name="platform").value
         try:
             settings["queue_server"] = Settings.objects.get(name="queue_server").value
@@ -459,9 +444,3 @@ class JobViewSet(viewsets.ModelViewSet):
             instance_names.append(application.instance_name)
             ports += application.port.split(",")
         return {"titles" : instance_titles, "instance_names" : instance_names, "ports" : ports}
-
-    def isValidMachineStatus(self, settings):
-        command = "status"
-        command = osPath.join(osPath.dirname(osPath.realpath(__file__)), '../admin_tools/ebiokit_launcher.sh') + ' "' + settings.get("ebiokit_host") + '" "' + settings.get("ebiokit_password") + '" "' + settings.get("platform") + '" "' + command + '"'
-        output = subprocess.check_output(['bash', '-c', command])
-        return (output.rstrip() == "RUNNING")

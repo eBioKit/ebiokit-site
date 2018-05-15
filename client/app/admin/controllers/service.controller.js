@@ -75,50 +75,6 @@
 			}
 		};
 
-		this.retrieveEbiokitMachineStatus = function(){
-			$scope.isLoading = true;
-
-			$http($rootScope.getHttpRequestConfig("GET", "ebiokit-machine-status", {})).
-			then(
-				function successCallback(response){
-					$scope.isLoading = false;
-					$scope.ebiokit_machine_status = response.data.ebiokit_machine_status;
-				},
-				function errorCallback(response){
-					$scope.isLoading = false;
-
-					debugger;
-					var message = "Failed while retrieving the ebiokit machine status.";
-					$dialogs.showErrorDialog(message, {
-						logMessage : message + " at ServiceListController:retrieveEbiokitMachineStatus."
-					});
-					console.error(response.data);
-				}
-			);
-		};
-
-		this.sendStartEbiokitMachine = function(){
-			$scope.isLoading = true;
-
-			$http($rootScope.getHttpRequestConfig("POST", "ebiokit-machine-status", {})).
-			then(
-				function successCallback(response){
-					$scope.isLoading = false;
-					me.retrieveEbiokitMachineStatus();
-				},
-				function errorCallback(response){
-					$scope.isLoading = false;
-
-					debugger;
-					var message = "Failed while starting the ebiokit machine.";
-					$dialogs.showErrorDialog(message, {
-						logMessage : message + " at ServiceListController:sendStartEbiokitMachine."
-					});
-					console.error(response.data);
-				}
-			);
-		};
-
 		this.retrieveSystemInfo = function(){
 			$http($rootScope.getHttpRequestConfig("GET", "system-info", {})).
 			then(
@@ -143,7 +99,6 @@
 
 		this.updateServicesInfo = function(){
 			console.log("Updating service information");
-			me.retrieveEbiokitMachineStatus();
 			me.retrieveServicesListData(true);
 		};
 
@@ -373,7 +328,6 @@
 		if($state.current.name === "control-panel"){
 			this.retrieveServicesListData(true);
 			this.retrieveSystemInfo();
-			this.retrieveEbiokitMachineStatus();
 			$scope.interval.push($interval(this.retrieveSystemInfo, 5000));
 			$scope.interval.push($interval(this.updateServicesInfo, 30000));
 

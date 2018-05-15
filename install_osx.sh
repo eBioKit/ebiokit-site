@@ -74,8 +74,3 @@ echo ""
 #TODO: start services and go to IP/admin
 #TODO: Go to settings check if valid data dirs
 #TODO: logout and create an account, login again as ebiokit and change admin users
-
-tar xzvf ebiokit-original.tar.gz
-mv ebiokit /data/ebiokit-machines
-mv ebiokit-original.tar.gz /data/ebiokit-machines/
-VBoxManage registervm /data/ebiokit-machines/ebiokit.vbox

@@ -35,6 +35,7 @@ def functionWrapper(taks_id, command):
     output = subprocess.check_output(['bash', '-c', command])
     print "Task " + taks_id + " finished"
 
+
 def backup_data_handler(jobID, instance_name, settings=None):
     #version = "latest",
     #TODO: GET INSTANCE BY instance_name
@@ -58,6 +59,7 @@ def backup_data_handler(jobID, instance_name, settings=None):
 
     return True
 
+
 def download_file_handler(task_id, URL, settings):
     working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
     log(working_dir, "download_file_handler - Downloading file from " + URL, task_id)
@@ -65,6 +67,7 @@ def download_file_handler(task_id, URL, settings):
     output = subprocess.check_output(['bash', '-c', command])
     log(working_dir, "download_file_handler - File successfully downloaded. " + output, task_id)
     return True
+
 
 def checksum_image_data_handler(task_id, settings=None):
     working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
@@ -77,34 +80,35 @@ def checksum_image_data_handler(task_id, settings=None):
     log(working_dir, "checksum_image_data_handler - Done: " + output, task_id)
     return True
 
+
 def docker_pull_handler(task_id, docker_name, settings=None):
     working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
     log(working_dir, "docker_pull_handler - Pulling image " + docker_name + "...", task_id)
-    #version param?
+    #TODO: version param?
     command = "docker pull " + docker_name
     return ebiokit_remote_launcher(command, settings)
+
 
 def extract_image_data_handler(task_id, settings=None):
     working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
 
     files = [x for x in osListdir(working_dir) if len(x) >= 7 and x[-7:] == ".7z.001"]
     if len(files) > 0:
+        # First extract the data to the corresponding directory
         log(working_dir, "extract_image_data_handler - Extracting files", task_id)
-        command = "7za e -y -o" + settings.get("ebiokit_data_location") + "ebiokit-data/" + settings.get("INSTANCE_NAME") + " " + working_dir + "/*.7z.001"
+        command = "7za e -y -o" + settings.get("ebiokit_data_location") + "ebiokit-data/" + settings.get("INSTANCE_NAME") + "/ " + working_dir + "/*.7z.001"
         output = subprocess.check_output(['bash', '-c', command])
         log(working_dir, "extract_image_data_handler - Extracting files: " + output, task_id)
-        command = "mv " + settings.get("ebiokit_data_location") + "ebiokit-data/" + settings.get("INSTANCE_NAME") + "/*.vdi " + settings.get("ebiokit_data_location") + "ebiokit-data/" + settings.get("INSTANCE_NAME") + ".vdi"
-        output = subprocess.check_output(['bash', '-c', command])
-        command = "rmdir " + settings.get("ebiokit_data_location") + "ebiokit-data/" + settings.get("INSTANCE_NAME") + "/"
-        output = subprocess.check_output(['bash', '-c', command])
 
     command = "7za e -y -o" + working_dir + "/service_conf " + working_dir + "/service_conf.7z"
     output = subprocess.check_output(['bash', '-c', command])
     log(working_dir, "extract_image_data_handler - Extracting files: " + output, task_id)
     return True
 
+
 def register_service_handler(task_id, instance_name=None, settings=None):
     #TODO dockers param?
+    # First register the new service in the database
     working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
     log(working_dir, "register_service_handler - Loading service json data...", task_id)
     import json
@@ -122,76 +126,30 @@ def register_service_handler(task_id, instance_name=None, settings=None):
     service.service = data.get("service")
     service.port = ",".join(get_service_ports(settings))
     service.website = "<HOST_NAME>:" + get_service_ports(settings)[0]
-
     #TODO: tipo?
     # service.type = data.get("type")
-
     service.raw_options = json.dumps(settings, ensure_ascii=False)
-
     service.save()
 
-    settings["INSTANCE_DOCKERS"] = data.get("dockers").replace(",","#")
+    settings["INSTANCE_DOCKERS"] = data.get("dockers").replace(",", "#")
 
+    # Now adapt the settings for the proxy rules and copy them to the correspoding directory
     log(working_dir, "register_service_handler - Registering service in proxy", task_id)
-    #REPLACE THE VALUES IN THE PROXY FILES
     copy_and_replace(working_dir + "/service_conf/proxy.upstream", settings.get("nginx_data_location") + instance_name + ".upstream", settings)
     copy_and_replace(working_dir + "/service_conf/proxy.conf", settings.get("nginx_data_location") + instance_name + ".conf", settings)
 
+    # Now copy the launcher file (docker-compose) to auto-launch the service on boot
     log(working_dir, "register_service_handler - Add launcher file", task_id)
     command = "mkdir -p " + settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name
     output = subprocess.check_output(['bash', '-c', command])
-    #REPLACE THE VALUES IN THE COMPOSE FILE
     copy_and_replace(working_dir + "/service_conf/service.launcher", settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name + "/docker-compose.yml", settings)
 
+    # Save the auto-remove instructions
     log(working_dir, "register_service_handler - Add uninstall instructions", task_id)
     copy_and_replace(working_dir + "/service_conf/uninstall.json", settings.get("ebiokit_data_location") + "ebiokit-services/uninstallers/" + instance_name + ".json", settings)
 
-    log(working_dir, "register_service_handler - Register ports", task_id)
-    ports = get_service_ports(settings)
-    n_rule = 1
-    for port in ports:
-        log(working_dir, "register_image_handler - Adding port forwarding rule for port " + port, task_id)
-        command = "vboxmanage controlvm ebiokit natpf2 \"sp_" + instance_name + "_" + str(n_rule) + ",tcp,," + str(port) + ",," + str(port) + "\""
-        output = subprocess.check_output(['bash', '-c', command])
-        n_rule+=1
     return True
 
-def register_vdi_image_handler(task_id, instance_name=None, settings=None):
-    working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
-
-    log(working_dir, "register_image_handler - Get available SATA port", task_id)
-    command = "VBoxManage showvminfo ebiokit | grep 'SATA (' | awk 'BEGIN{_next=0}{gsub(/\(|,/,\"\",$2); if(_next==$2){_next=_next+1;}}END{print _next;exit;}'"
-    port = subprocess.check_output(['bash', '-c', command])
-    port = int(port.rstrip())
-    log(working_dir, "register_image_handler - Available SATA port: " + str(port), task_id)
-    #TODO: REMOVE IF ALREADY THERE (SHOULD NOT BE THERE) -> FIND PORT AND SET TO NONE
-    #print "Removing previous VDI (if any)"
-
-    log(working_dir, "register_image_handler - Get new UUID for disk", task_id)
-    command = "VBoxManage internalcommands sethduuid " + settings.get("ebiokit_data_location") + "ebiokit-data/" + instance_name + ".vdi"
-    uuid = subprocess.check_output(['bash', '-c', command])
-    import re
-    uuid=re.compile(".*: ").sub("", uuid).rstrip()
-    log(working_dir, "register_image_handler - New UUID for disk is: " + uuid, task_id)
-
-    log(working_dir, "register_image_handler - Add init file", task_id)
-    #REPLACE THE VALUES IN THE INIT FILE
-    settings["UUID"] = uuid
-    copy_and_replace(working_dir + "/service_conf/service.init", settings.get("ebiokit_data_location") + "ebiokit-services/init-scripts/" + instance_name + ".init", settings)
-
-    stop_docker_machine_handler(task_id, settings)
-
-    log(working_dir, "register_image_handler - Register new VDI in port " + str(port), task_id)
-    command = "VBoxManage storageattach  ebiokit --storagectl SATA --port " + str(port) + " --device 0 --type hdd --medium " + settings.get("ebiokit_data_location") + "ebiokit-data/" + instance_name + ".vdi"
-    output = subprocess.check_output(['bash', '-c', command])
-
-    start_docker_machine_handler(task_id, settings)
-
-    # log(working_dir, "register_image_handler - Obtaining drive UUID", task_id)
-    # command = "VBoxManage showvminfo ebiokit | grep 'SATA (' | grep 'ebiokit-data/" + instance_name + ".vdi' | awk -F':' '{uuid=gsub(/ |)/,\"\",$3);print $3}'"
-    # uuid = subprocess.check_output(['bash', '-c', command]).rstrip()
-    # log(working_dir, "register_image_handler - Drive UUID is: " + uuid, task_id)
-    return True
 
 def prepare_upgrade_handler(task_id, instance_name=None, keep_data="keep", script_url=None, settings=None):
     working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
@@ -215,6 +173,7 @@ def prepare_upgrade_handler(task_id, instance_name=None, keep_data="keep", scrip
 
     return True
 
+
 def post_upgrade_handler(task_id, instance_name=None, keep_data="keep", script_url=None, settings=None):
     working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
     log(working_dir, "post_upgrade_handler - Running post-upgrading scripts...", task_id)
@@ -237,19 +196,6 @@ def post_upgrade_handler(task_id, instance_name=None, keep_data="keep", script_u
 
     return True
 
-def start_docker_machine_handler(task_id, settings=None):
-    working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
-    log(working_dir, "start_docker_machine_handler - Starting docker machine...", task_id)
-    command = "startup"
-    ebiokit_remote_launcher(command, settings)
-    # TODO: DISABLE MAINTENANCE MODE
-
-def stop_docker_machine_handler(task_id, settings=None):
-    working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
-    log(working_dir, "restart_docker_machine_handler - Stopping docker machine...", task_id)
-    command = "shutdown"
-    ebiokit_remote_launcher(command, settings, ignore=True)
-    #TODO: ENABLE MAINTENANCE MODE
 
 def clean_data_handler(task_id, settings=None):
     #TODO docker_name param?
@@ -268,10 +214,11 @@ def clean_data_handler(task_id, settings=None):
         rmtree(working_dir)
     return True
 
+
 def uninstall_service_handler_part_1(task_id, instance_name=None, dockers="", settings=None):
     working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
 
-    #STEP 1. UNREGISTER THE  SERVICE (REMOVE FROM DB)
+    #STEP 1. UNREGISTER THE SERVICE (REMOVE FROM DB)
     log(working_dir, "uninstall_service_handler_part_1 - Removing service from database...", task_id)
     from models import Application
     service = Application.objects.get(instance_name=instance_name)
@@ -293,15 +240,6 @@ def uninstall_service_handler_part_1(task_id, instance_name=None, dockers="", se
             command = "docker rmi " + docker
             ebiokit_remote_launcher(command, settings, ignore=True)
 
-    #STEP 5. UNREGISTER THE PORT FORWARDING RULES
-    log(working_dir, "uninstall_service_handler_part_1 - Unregister the port forwarding rules in virtual machine...", task_id)
-    command="vboxmanage showvminfo ebiokit --details | grep \"NIC 2\" | grep -oh \"sp_" + instance_name + "_[0-9]*,\" | tr -d '\n'"
-    rules = subprocess.check_output(['bash', '-c', command])
-    rules = rules.rstrip().rstrip(",").split(",")
-    for rule in rules:
-        command = "vboxmanage controlvm ebiokit natpf2 delete  \"" + rule + "\""
-        output = subprocess.check_output(['bash', '-c', command])
-
     #STEP 6. REMOVE THE PROXY CONF
     if osPath.isfile(settings.get("nginx_data_location") + instance_name + ".upstream"):
         log(working_dir, "uninstall_service_handler_part_1 - Delete the NGINX UPSTREAM file...", task_id)
@@ -321,48 +259,11 @@ def uninstall_service_handler_part_1(task_id, instance_name=None, dockers="", se
         log(working_dir, "uninstall_service_handler_part_1 - Delete the uninstaller file...", task_id)
         osRemoveFile(settings.get("ebiokit_data_location") + "ebiokit-services/uninstallers/" + instance_name + ".json")
 
-
-def uninstall_service_handler_part_2_vdi(task_id, instance_name=None, dockers="", settings=None):
-    working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
-
-    #STEP 9. STOP THE VIRTUAL MACHINE
-    stop_docker_machine_handler(task_id,settings)
-
-    #STEP 10. UNREGISTER THE VDI IMAGE IN VIRTUAL MACHINE
-    log(working_dir, "uninstall_service_handler_part_2_vdi - Unregister the VDI image in virtual machine...", task_id)
-    command = "VBoxManage showvminfo ebiokit | grep 'SATA (' | grep '" + instance_name + ".vdi' | awk '{gsub(/\(|,/,\"\",$2); print $2}'"
-    port = subprocess.check_output(['bash', '-c', command])
-    port = port.rstrip()
-    command = "VBoxManage showvminfo ebiokit | grep 'SATA (' | grep '" + instance_name + ".vdi' | sed 's/.*UUID: //' | sed 's/)$//'"
-    uuid = subprocess.check_output(['bash', '-c', command])
-    uuid = uuid.rstrip()
-
-    command = "vboxmanage storageattach ebiokit --storagectl \"SATA\" --port " + port + " --medium none"
-    output = subprocess.check_output(['bash', '-c', command])
-
-    #STEP 11. REMOVE THE INIT FILE
-    if osPath.isfile(settings.get("ebiokit_data_location") + "ebiokit-services/init-scripts/" + instance_name + ".init"):
-        log(working_dir, "uninstall_service_handler_part_2_vdi - Delete the INIT file...", task_id)
-        osRemoveFile(settings.get("ebiokit_data_location") + "ebiokit-services/init-scripts/" + instance_name + ".init")
-
-    #STEP 12. RELAUNCH DOCKER MACHINE
-    start_docker_machine_handler(task_id,settings)
-
     #STEP 13. REMOVE THE VDI FILE
-    if osPath.isfile(settings.get("ebiokit_data_location") + "ebiokit-data/" + instance_name + ".vdi"):
-        log(working_dir, "uninstall_service_handler_part_2_vdi - Delete the VDI image...", task_id)
-        osRemoveFile(settings.get("ebiokit_data_location") + "ebiokit-data/" + instance_name + ".vdi")
+    if osPath.isdir(settings.get("ebiokit_data_location") + "ebiokit-data/" + instance_name):
+        log(working_dir, "uninstall_service_handler_part_1 - Delete the instance data...", task_id)
+        osRemoveDir(settings.get("ebiokit_data_location") + "ebiokit-data/" + instance_name + "/")
 
-    command = "vboxmanage closemedium disk " + uuid
-    output = subprocess.check_output(['bash', '-c', command])
-
-def uninstall_service_handler_part_2_commondata(task_id, instance_name=None, dockers="", settings=None):
-    working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
-
-    #STEP 9. REMOVE THE DATA DIRECTORY
-    log(working_dir, "uninstall_service_handler_part_2_commondata - Removing application data...", task_id)
-    command = "sudo /home/ebiokit/rmdatadir /data/common-data/" + instance_name + "-data/"
-    ebiokit_remote_launcher(command, settings, ignore=True)
 
 def get_job_directory(tmp_dir, task_id, settings=None):
     jobID = task_id.split("_")[0]
@@ -371,6 +272,7 @@ def get_job_directory(tmp_dir, task_id, settings=None):
     if not path.exists(wd):
         makedirs(wd)
     return wd
+
 
 def copy_and_replace(source_file, target_file, replacements):
     source_file = open(source_file, 'r')
@@ -381,6 +283,7 @@ def copy_and_replace(source_file, target_file, replacements):
         target_file.write(line)
     source_file.close()
     target_file.close()
+
 
 def log(working_dir, message, task_id=""):
     print task_id + " - " + message
@@ -400,6 +303,7 @@ def ebiokit_remote_launcher(command, settings=None, ignore=False):
             raise ex
 
     return True
+
 
 def get_service_ports(settings):
     ports_aux = {}

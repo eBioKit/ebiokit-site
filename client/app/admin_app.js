@@ -133,8 +133,6 @@
 				return myAppConfig.SERVER_URL + "api/system/system-settings/";
 				case "system-version":
 				return myAppConfig.SERVER_URL + "api/system/system-version/";
-				case "ebiokit-machine-status":
-				return myAppConfig.SERVER_URL + "api/system/ebiokit-machine-status/";
 				case "service-list":
 				return myAppConfig.SERVER_URL + "api/applications/";
 				case "service-info":
