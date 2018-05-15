@@ -36,8 +36,9 @@ from rest_framework.decorators import detail_route
 import install_services_functions
 from models import Application, RemoteServer, Job, Task, Settings
 from resources.UserSessionManager import UserSessionManager
+# from resources.pysiq_api import enqueue, check_status, get_result
+import resources.pysiq_api as pysiq
 from serializers import JobSerializer
-from resources.PySiQ import Queue
 from os import path as osPath
 import subprocess
 
@@ -46,42 +47,58 @@ class JobViewSet(viewsets.ModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
     lookup_field = "id"
-    N_WORKERS = 4
-
-    queue_instance = Queue()
-    queue_instance.enableStdoutLogging()
-    queue_instance.start_worker(N_WORKERS)
 
     #---------------------------------------------------------------
     #- MANIPULATE INSTALLED SERVICES
     #---------------------------------------------------------------
     @detail_route(renderer_classes=[renderers.JSONRenderer])
     def prepareInstall(self, request, instance_name=None):
+        """
+        This function retrieves from the centralhub the installation settings for a given service (i.e. the content for
+        the form that we use to configure the service: name, port, etc.)
+        :param request:
+        :param instance_name:
+        :return:
+        """
+        # First we validate that user is a valid ADMIN user
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
+        # Now send the request to the centralhub
         mainRemoteServer = RemoteServer.objects.get(enabled=1)
         r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/" + instance_name + "/prepare-install")
+
         if r.status_code != 200 or r.json().get("success") == False:
             response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve installation settings for service from ' + mainRemoteServer.name})
             response.status_code = 500
             return response
 
+        # Finally, check the currently installed services and get the invalid settings to avoid collisions
         invalid_options = self.get_current_settings()
 
         return JsonResponse({'success': True, 'settings' : r.json().get("settings"), "invalid_options" : invalid_options})
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
     def prepareUpgrade(self, request, instance_name=None):
+        """
+        This function retrieves from the centralhub the upgrading settings for a given service (i.e. the content for
+        the form that we use to configure the service: name, port, etc.)
+        :param request:
+        :param instance_name:
+        :return:
+        """
+        # First we validate that user is a valid ADMIN user
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-
+        # Now send the request to the centralhub
         mainRemoteServer = RemoteServer.objects.get(enabled=1)
         candidate = request.GET.get('candidate', '')
         r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/" + candidate + "/prepare-install")
+
         if r.status_code != 200 or r.json().get("success") == False:
             response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve installation settings for service from ' + mainRemoteServer.name})
             response.status_code = 500
             return response
 
+        # Check the currently installed services and get the invalid settings to avoid collisions
         invalid_options = self.get_current_settings(ignore=[instance_name])
 
         service = Application.objects.filter(instance_name=instance_name)[:1]
@@ -101,29 +118,33 @@ class JobViewSet(viewsets.ModelViewSet):
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
     def install(self, request, instance_name=None):
+        # First we validate that user is a valid ADMIN user
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
         settings = self.read_settings(request)
 
-        #Step 0. Check machine status
+        # Step 0. Check machine status
         if not self.isValidMachineStatus(settings):
             return JsonResponse({'success': False, 'error_message': "eBioKit machine is unreachable. Perhaps it is not running?"})
 
-        #Step 1. Get all services from remote server
+        # Step 1. Get the installation instructions from the centralhub
         mainRemoteServer = RemoteServer.objects.get(enabled=1)
         r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/" + instance_name + "/install")
+
         if r.status_code != 200 or r.json().get("success") == False:
             response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve installation instructions for service from ' + mainRemoteServer.name})
             response.status_code = 500
             return response
         instructions = r.json().get("instructions")
 
+        # Step 2. Create a new instance of job and register it in the database.
         job = Job()
         job.name = instructions.get("job_name")
         job.id = self.getNewJobID()
         job.date = datetime.datetime.now().strftime("%Y%m%d%H%M")
         job.save()
 
+        # Step 3. For each task in the job, create a new instance of Task and register it in the database.
         tasks = []
         for instruction in instructions.get("tasks"):
             if instruction.get("run-if", "install") != "install":
@@ -148,22 +169,27 @@ class JobViewSet(viewsets.ModelViewSet):
             task.save()
             tasks.append(task)
 
+        # Step 4. Finally, enqueue all the tasks in the queue
         for task in tasks:
             if task.command != "":
-                self.queue_instance.enqueue(
-                    fn=install_services_functions.functionWrapper,
+                pysiq.enqueue(
+                    fn="functionWrapper",
                     args=(task.name + '(' + task.id + ')', task.command),
-                    task_id= task.id,
-                    depend= None if len(task.depend) == 0 else task.depend.split(","),
-                    incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
+                    task_id=task.id,
+                    depend=(None if len(task.depend) == 0 else task.depend.split(",")),
+                    incompatible=None if len(task.incompatible) == 0 else task.incompatible.split(","),
+                    server=settings["queue_server"],
+                    port=settings["queue_port"]
                 )
             else:
-                self.queue_instance.enqueue(
-                    fn= getattr(install_services_functions, task.function),
+                pysiq.enqueue(
+                    fn=task.function,
                     args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
-                    task_id= task.id,
-                    depend= None if len(task.depend) == 0 else task.depend.split(","),
-                    incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
+                    task_id=task.id,
+                    depend=(None if len(task.depend) == 0 else task.depend.split(",")),
+                    incompatible=(None if len(task.incompatible) == 0 else task.incompatible.split(",")),
+                    server=settings["queue_server"],
+                    port=settings["queue_port"]
                 )
 
         return JsonResponse({'success': True, 'job_id': job.id})
@@ -220,7 +246,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
         for task in tasks:
             if task.command != "":
-                self.queue_instance.enqueue(
+                pysiq.enqueue(
                     fn=install_services_functions.functionWrapper,
                     args=(task.name + '(' + task.id + ')', task.command),
                     task_id= task.id,
@@ -228,7 +254,7 @@ class JobViewSet(viewsets.ModelViewSet):
                     incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
                 )
             else:
-                self.queue_instance.enqueue(
+                pysiq.enqueue(
                     fn= getattr(install_services_functions, task.function),
                     args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
                     task_id= task.id,
@@ -285,7 +311,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
         for task in tasks:
             if task.command != "":
-                self.queue_instance.enqueue(
+                pysiq.enqueue(
                     fn=install_services_functions.functionWrapper,
                     args=(task.name + '(' + task.id + ')', task.command),
                     task_id=task.id,
@@ -293,7 +319,7 @@ class JobViewSet(viewsets.ModelViewSet):
                     incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
                 )
             else:
-                self.queue_instance.enqueue(
+                pysiq.enqueue(
                     fn=getattr(install_services_functions, task.function),
                     args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
                     task_id=task.id,
@@ -317,8 +343,8 @@ class JobViewSet(viewsets.ModelViewSet):
             for task in tasks:
                 if task.status != 'FINISHED' and task.status != 'FAILED':
                     not_finished += 1
-                    _status = self.queue_instance.check_status(task.id)
-                    _result = self.queue_instance.get_result(task.id, False)
+                    _status = pysiq.check_status(task.id)
+                    _result = pysiq.get_result(task.id, remove=False)
                     #TODO: EVALUATE RESULT
                     try:
                         _status = _status.upper().replace(" ", "_")
@@ -344,7 +370,7 @@ class JobViewSet(viewsets.ModelViewSet):
             #REMOVE ALL TASKS FROM QUEUE
             if not_finished == 0:
                 for task in tasks:
-                    self.queue_instance.get_result(task.id, True)
+                    pysiq.get_result(task.id, remove=True)
 
             jobs_list.append({
                 'id': job.id,
@@ -379,8 +405,8 @@ class JobViewSet(viewsets.ModelViewSet):
         if job_instance != None:
             tasks = Task.objects.filter(job_id=job_instance.id)
             for task in tasks:
-                _result = self.queue_instance.get_result(task.id, True)
-                self.queue_instance.remove_task(task.id)
+                _result = pysiq.get_result(task.id, True)
+                pysiq.remove_task(task.id)
                 task.delete()
             job_instance.delete()
 
@@ -409,6 +435,15 @@ class JobViewSet(viewsets.ModelViewSet):
         settings["ebiokit_host"] = Settings.objects.get(name="ebiokit_host").value
         settings["ebiokit_password"] = Settings.objects.get(name="ebiokit_password").value
         settings["platform"] = Settings.objects.get(name="platform").value
+        try:
+            settings["queue_server"] = Settings.objects.get(name="queue_server").value
+        except:
+            settings["queue_server"] = "localhost"
+        try:
+            settings["queue_port"] = Settings.objects.get(name="queue_port").value
+        except:
+            settings["queue_port"] = "4444"
+
         return settings
 
     def get_current_settings(self, ignore=None):
