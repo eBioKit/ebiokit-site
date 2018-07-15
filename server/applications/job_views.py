@@ -27,6 +27,7 @@ Contributors:
 
 import datetime
 
+import json
 import requests
 from django.http import JsonResponse
 from rest_framework import renderers
@@ -107,7 +108,6 @@ class JobViewSet(viewsets.ModelViewSet):
             response.status_code = 500
             return response
 
-        import json
         current_options = json.loads(service[0].raw_options)
         settings = r.json().get("settings")
 
@@ -258,19 +258,18 @@ class JobViewSet(viewsets.ModelViewSet):
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
     def uninstall(self, request, instance_name=None):
+        # First we validate that user is a valid ADMIN user
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
         settings = self.read_settings(request)
 
+        # Step 1. Get the uninstall instructions from the data repository
         service = Application.objects.filter(instance_name=instance_name)[:1]
-
         if (len(service) == 0):
             return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
-
-        # Step 1. Get all services from remote server
-        import json
         instructions = json.loads(open(settings.get("ebiokit_data_location") + "ebiokit-services/uninstallers/" + instance_name + ".json", "r").read())
 
+        # Step 2. Create a new instance of job and register it in the database.
         job = Job()
         job.name = instructions.get("job_name")
         job.id = self.get_new_job_id()
@@ -300,19 +299,23 @@ class JobViewSet(viewsets.ModelViewSet):
         for task in tasks:
             if task.command != "":
                 pysiq.enqueue(
-                    fn=install_services_functions.functionWrapper,
+                    fn="functionWrapper",
                     args=(task.name + '(' + task.id + ')', task.command),
                     task_id=task.id,
-                    depend=None if len(task.depend) == 0 else task.depend.split(","),
-                    incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
+                    depend=(None if len(task.depend) == 0 else task.depend.split(",")),
+                    incompatible=None if len(task.incompatible) == 0 else task.incompatible.split(","),
+                    server=settings["queue_server"],
+                    port=settings["queue_port"]
                 )
             else:
                 pysiq.enqueue(
-                    fn=getattr(install_services_functions, task.function),
+                    fn=task.function,
                     args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
                     task_id=task.id,
-                    depend=None if len(task.depend) == 0 else task.depend.split(","),
-                    incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
+                    depend=(None if len(task.depend) == 0 else task.depend.split(",")),
+                    incompatible=(None if len(task.incompatible) == 0 else task.incompatible.split(",")),
+                    server=settings["queue_server"],
+                    port=settings["queue_port"]
                 )
 
         return JsonResponse({'success': True, 'job_id': job.id})
@@ -332,10 +335,10 @@ class JobViewSet(viewsets.ModelViewSet):
                 if task.status != 'FINISHED' and task.status != 'FAILED':
                     not_finished += 1
                     _status = pysiq.check_status(task.id)
-                    _result = pysiq.get_result(task.id, remove=False)
-                    #TODO: EVALUATE RESULT
+                    # _result = pysiq.get_result(task.id, remove=False)
+                    #TODO: EVALUATE RESULT?
                     try:
-                        _status = _status.upper().replace(" ", "_")
+                        _status = _status.status.upper().replace(" ", "_")
                         if task.status != _status:
                             task.status = _status
                             task.save()
@@ -392,8 +395,8 @@ class JobViewSet(viewsets.ModelViewSet):
         if job_instance != None:
             tasks = Task.objects.filter(job_id=job_instance.id)
             for task in tasks:
-                _result = pysiq.get_result(task.id, True)
-                pysiq.remove_task(task.id)
+                pysiq.get_result(task.id, remove=True)
+                # pysiq.remove_task(task.id)
                 task.delete()
             job_instance.delete()
 

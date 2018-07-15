@@ -24,6 +24,9 @@ global DB_LOCATION
 DB_LOCATION = None
 global INSTALLED_SERVICES
 INSTALLED_SERVICES = None
+global DATA_LOCATION
+DATA_LOCATION = None
+
 
 def read_conf():
     import os
@@ -33,6 +36,7 @@ def read_conf():
     config.readfp(open(file))
     global DB_LOCATION
     DB_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__file__)), config.get('Database settings', 'DB_LOCATION'))
+
 
 def get_installed_services():
     global INSTALLED_SERVICES
@@ -44,7 +48,20 @@ def get_installed_services():
         INSTALLED_SERVICES = []
         for service_data in cursor:
             INSTALLED_SERVICES.append(Service().parse(service_data))
+        cursor.close()
     return INSTALLED_SERVICES
+
+
+def get_data_location():
+    global DATA_LOCATION
+
+    if DATA_LOCATION == None:
+        connection = sqlite3.connect(DB_LOCATION)
+        cursor = connection.cursor()
+        cursor.execute('SELECT value from applications_settings WHERE name="ebiokit_data_location"');
+        DATA_LOCATION = cursor.fetchone()[0]
+        cursor.close()
+    return DATA_LOCATION.rstrip("/")
 
 
 def printServiceMessage(message, length=30):
@@ -55,7 +72,8 @@ def printServiceMessage(message, length=30):
 
 def ebiokit_remote_launcher(command, instance_name, ignore=False):
     settings = read_settings()
-    command = osPath.join(osPath.dirname(osPath.realpath(__file__)), '../ebiokit_launcher.sh') + ' "' + settings.get("ebiokit_host") + '" "'  + settings.get("ebiokit_password") + '" "'  + settings.get("platform") + '" "' + command + '" "' + instance_name + '"'
+    data_location = get_data_location()
+    command = osPath.join(osPath.dirname(osPath.realpath(__file__)), 'ebiokit_launcher.sh') + ' "' + settings.get("platform") + '" "' + command + '" "' + instance_name + '" "' + data_location + '"'
     error = ""
     try:
         p = subprocess.Popen(['bash', '-c', command], stdout=subprocess.PIPE, stderr=subprocess.PIPE)

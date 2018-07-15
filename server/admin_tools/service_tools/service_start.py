@@ -69,6 +69,7 @@ def show_help(message=""):
 
 def start_service(service):
     printServiceMessage("STARTING " + service.title)
+
     if not service.enabled:
         print "SERVICE IS NOT ENABLED"
         return

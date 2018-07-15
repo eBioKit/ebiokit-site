@@ -76,13 +76,13 @@ def check_service(service, nice_output = True):
         return
 
     try:
+        # Call to status for docker-compose
         output, error = ebiokit_remote_launcher("service status", service.instance_name)
         print output
         print >> sys.stderr, error
     except Exception as ex:
         print ex.message
         print "UNKNOWN"
-
     return
 
 if __name__ == "__main__":
