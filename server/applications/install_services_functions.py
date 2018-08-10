@@ -258,21 +258,27 @@ def docker_rmi_handler(task_id, instance_name=None, dockers="", settings=None):
 
 
 def unregister_service_handler(task_id, instance_name=None, dockers="", settings=None):
+    connection = None
     try:
         working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
         #UNREGISTER THE SERVICE (REMOVE FROM DB)
         log(working_dir, "unregister_service_handler - Removing service from database...", task_id)
         #TODO: aqui
-        abspath = os.path.abspath(__file__)
-        dname = os.path.dirname(abspath)
-        import sys
-        sys.path.append(dname)
-        from models import Application
-        service = Application.objects.get(instance_name=instance_name)
-        service.delete()
+        abspath = os.path.dirname(os.path.abspath(__file__))
+        import sqlite3
+        connection = sqlite3.connect(abspath.rstrip("/") + "/../db.sqlite3")
+        cursor = connection.cursor()
+        cursor.execute('DELETE FROM applications_application WHERE instance_name="' + instance_name + '"')
+        connection.commit()
     except Exception as e:
         log(working_dir, "unregister_service_handler - Failed: " + str(e), task_id)
         raise e
+    finally:
+        try:
+            connection.close()
+        except Exception as e:
+            raise e
+
 
 def remove_service_data_handler(task_id, instance_name=None, dockers="", settings=None):
     try:
