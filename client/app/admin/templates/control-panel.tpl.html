@@ -41,7 +41,8 @@
 					</thead>
 					<tbody>
 						<tr ng-if="services === undefined || services.length === 0" ><td colspan="5">
-							<h3 style="text-align:center;">No services are installed in the system</h3>
+							<h3 style="text-align:center;">No services were installed in the system</h3>
+							<h3 style="text-align:center;"><a class="clickable" ng-click="controller.showServicesShopHandler()">Install new services now!</a></h3>
 						</td>
 					</tr>
 					<tr service-row ng-repeat="service in services | filter:{installed : '!!'}" ></tr>

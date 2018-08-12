@@ -198,7 +198,7 @@ def register_service_handler(task_id, instance_name=None, settings=None):
         log(working_dir, "register_service_handler - Failed: " + str(e), task_id)
         raise e
 
-def clean_data_handler(task_id, settings=None):
+def clean_data_handler(task_id, settings=None, full=False):
     """
     This function cleans all the temporary data.
     :param task_id:
@@ -214,7 +214,16 @@ def clean_data_handler(task_id, settings=None):
         #     ebiokit_remote_launcher(command, settings)
         log(working_dir, "clean_data_handler - Removing temporal data...", task_id)
         if os.path.exists(working_dir):
-            rmtree(working_dir)
+            if full:
+                rmtree(working_dir)
+            else:
+                for filename in os.listdir(working_dir):
+                    filename = working_dir.rstrip("/") + "/" + filename
+                    # If is a directory, remove it
+                    if os.path.isdir(filename):
+                        rmtree(filename)
+                    elif ".log" not in filename:
+                        os.remove(filename)
         return True
     except Exception as e:
         log(working_dir, "clean_data_handler - Failed: " + str(e), task_id)

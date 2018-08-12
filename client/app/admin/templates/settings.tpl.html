@@ -19,19 +19,8 @@
               <p><i class="fa fa-info-circle"></i> Use this section to configure the main settings for your eBioKit server.</p>
               <p>Use the <i class="fa fa-question-circle"></i> icon at the right for getting help for any field in the form.</p>
             </div>
-            <h4>System version</h4>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="system_version">Current version is</label>
-              <div class="col-sm-9">
-                <p class="form-control-static">
-                  {{'v' + settings["system_version"]}}
-                  <a ng-if="settings.system_version < settings.latest_version" href="/update" target="_blank"> <span class="label label-info">Update available (v{{settings["latest_version"]}})</span></a>
-                </p>
-              </div>
-            </div>
-            <hr>
-            <h4>Account settings</h4>
-            <h5>Change your password</h5>
+            <h3>Account settings</h3>
+            <h4>Change your password</h4>
             <div class="form-group">
               <label class="control-label col-sm-2" for="password">Previous password:</label>
               <div class="col-sm-9">
@@ -65,57 +54,74 @@
               <p class="col-sm-2"></p>
               <p class="text-danger col-sm-9">Passwords do not match!</p>
             </div>
-            <hr>
-            <h4>System settings</h4>
             <div class="form-group">
-              <label class="control-label col-sm-2" for="admin_users">Admin accounts:  </label>
-              <div class="col-sm-9">
-                <input type="text" class="form-control" id="admin_users" ng-model="settings.admin_users" ng-required="true">
-              </div>
-              <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Email accounts for administrator in this eBioKit (separated by comma)."></i>
-            </div>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="nginx_data_location">NGINX conf files:  </label>
-              <div class="col-sm-9">
-                <input type="text" class="form-control" id="nginx_data_location" ng-model="settings.nginx_data_location" ng-required="true">
-              </div>
-              <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Location for the configuration files for NGINX (reverse proxy server)."></i>
-              <i ng-if="settings.messages.nginx_data_location" class="text-danger fa fa-exclamation-circle" uib-tooltip="{{settings.messages.nginx_data_location}}"></i>
-            </div>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="ebiokit_data_location">eBioKit data location:  </label>
-              <div class="col-sm-9">
-                <input type="text" class="form-control" id="ebiokit_data_location" ng-model="settings.ebiokit_data_location" ng-required="true">
-              </div>
-              <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Location for the data files for the eBioKit."></i>
-              <i ng-if="settings.messages.ebiokit_data_location" class="text-danger fa fa-exclamation-circle" uib-tooltip="{{settings.messages.ebiokit_data_location}}"></i>
-            </div>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="tmp_dir">Temporal dir:  </label>
-              <div class="col-sm-9">
-                <input type="text" class="form-control" id="tmp_dir" ng-model="settings.tmp_dir" ng-required="true">
-              </div>
-              <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="The directory used for storing temporal files during the installation of new components."></i>
-              <i ng-if="settings.messages.tmp_dir" class="text-danger fa fa-exclamation-circle" uib-tooltip="{{settings.messages.tmp_dir}}"></i>
-            </div>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="tmp_dir">eBioKit centralhub:  </label>
-							<div class="col-sm-10" style="margin-top:5px; margin-bottom:10px;">
-                <select name="singleSelect" ng-options="server as server.name for server in settings.available_remote_servers" ng-model="settings.remote_server" ng-change="onChangeSelectedRemoteServerHandler()"></select>
-              </div>
-							<label class="control-label col-sm-2" for="tmp_dir"></label>
-							<div class="col-sm-4">
-								<input type="text" class="form-control" id="remote_server_name" ng-model="settings.remote_server.name" ng-required="true">
-							</div>
-              <div class="col-sm-5">
-                <input type="text" class="form-control" id="remote_server_url" ng-model="settings.remote_server.url" ng-required="true">
-              </div>
-              <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="The directory used for storing temporal files during the installation of new components."></i>
-            </div>
-            <div class="form-group">
-              <div style=" text-align: center; ">
+              <div style="text-align: right;margin-right: 105px">
                 <a ng-show="isLoading !== true" class="btn btn-success btn-lg" ng-click="controller.updateSystemSettingsHandler()"><i class="fa fa-check"></i> Update settings</a>
                 <a ng-show="isLoading === true" disabled class="btn btn-default btn-lg"><i class="fa fa-spinner fa-spin fa-fw"></i> Saving</a>
+              </div>
+            </div>
+            <hr>
+            <h3>Danger zone</h3>
+            <div style="border:1px solid red; padding: 10px; border-radius:5px;">
+              <h4>System settings</h4>
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="admin_users">Admin accounts:  </label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="admin_users" ng-model="settings.admin_users" ng-required="true">
+                </div>
+                <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Email accounts for administrator in this eBioKit (separated by comma)."></i>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="nginx_data_location">NGINX conf files:  </label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="nginx_data_location" ng-model="settings.nginx_data_location" ng-required="true">
+                </div>
+                <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Location for the configuration files for NGINX (reverse proxy server)."></i>
+                <i ng-if="settings.messages.nginx_data_location" class="text-danger fa fa-exclamation-circle" uib-tooltip="{{settings.messages.nginx_data_location}}"></i>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="ebiokit_data_location">eBioKit data location:  </label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="ebiokit_data_location" ng-model="settings.ebiokit_data_location" ng-required="true">
+                </div>
+                <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Location for the data files for the eBioKit."></i>
+                <i ng-if="settings.messages.ebiokit_data_location" class="text-danger fa fa-exclamation-circle" uib-tooltip="{{settings.messages.ebiokit_data_location}}"></i>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="tmp_dir">Temporal dir:  </label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="tmp_dir" ng-model="settings.tmp_dir" ng-required="true">
+                </div>
+                <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="The directory used for storing temporal files during the installation of new components."></i>
+                <i ng-if="settings.messages.tmp_dir" class="text-danger fa fa-exclamation-circle" uib-tooltip="{{settings.messages.tmp_dir}}"></i>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="tmp_dir">eBioKit centralhub:  </label>
+                <div class="col-sm-10" style="margin-top:5px; margin-bottom:10px;">
+                  <select name="singleSelect" ng-options="server as server.name for server in settings.available_remote_servers" ng-model="settings.remote_server" ng-change="onChangeSelectedRemoteServerHandler()"></select>
+                  <a ng-click="controller.addNewRemoteServerHandler()"><i class="fa fa-plus"></i> New repository</a>
+                </div>
+                <label class="control-label col-sm-2" for="tmp_dir"></label>
+                <div class="col-sm-4">
+                  <input type="text" class="form-control" id="remote_server_name" ng-model="settings.remote_server.name" ng-required="true">
+                  <a style="position: absolute; right: 0; top: 6px;" ng-click="controller.deleteRemoteServerHandler(settings.remote_server)" ><i class="fa fa-trash text-danger"></i></a>
+                </div>
+                <div class="col-sm-5">
+                  <input type="text" class="form-control" id="remote_server_url" ng-model="settings.remote_server.url" ng-required="true">
+                </div>
+                <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="The directory used for storing temporal files during the installation of new components."></i>
+              </div>
+              <h4 class="control-label col-sm-2" ></h4>
+              <h4 class="col-sm-10">
+                <b>eBioKit {{'v' + settings["system_version"]}}</b>
+                <span class="label label-info">Update available (v{{settings["latest_version"]}})</span>
+                <a ng-if="settings.system_version < settings.latest_version" href="/update" target="_blank"> More info</a>
+              </h4>
+              <div class="form-group">
+                <div style="text-align: right;margin-right: 105px">
+                  <a ng-show="isLoading !== true" class="btn btn-success btn-lg" ng-click="controller.updateSystemSettingsHandler()"><i class="fa fa-check"></i> Update settings</a>
+                  <a ng-show="isLoading === true" disabled class="btn btn-default btn-lg"><i class="fa fa-spinner fa-spin fa-fw"></i> Saving</a>
+                </div>
               </div>
             </div>
           </form>

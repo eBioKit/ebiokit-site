@@ -260,6 +260,10 @@
 			me.changeCurrentServiceHandler('jobs-queue');
 		});
 
+		$scope.$on(APP_EVENTS.installNewServiceAction, function (event, args) {
+			me.changeCurrentServiceHandler('application-store');
+		});
+
 		this.changeCurrentServiceHandler = function(service){
 			if(typeof service === "string"){
 				for(var i in $scope.open_services){

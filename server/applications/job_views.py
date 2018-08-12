@@ -166,29 +166,32 @@ class JobViewSet(viewsets.ModelViewSet):
             tasks.append(task)
 
         # Step 4. Finally, enqueue all the tasks in the queue
-        for task in tasks:
-            if task.command != "":
-                pysiq.enqueue(
-                    fn="functionWrapper",
-                    args=(task.name + '(' + task.id + ')', task.command),
-                    task_id=task.id,
-                    depend=(None if len(task.depend) == 0 else task.depend.split(",")),
-                    incompatible=None if len(task.incompatible) == 0 else task.incompatible.split(","),
-                    server=settings["queue_server"],
-                    port=settings["queue_port"]
-                )
-            else:
-                pysiq.enqueue(
-                    fn=task.function,
-                    args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
-                    task_id=task.id,
-                    depend=(None if len(task.depend) == 0 else task.depend.split(",")),
-                    incompatible=(None if len(task.incompatible) == 0 else task.incompatible.split(",")),
-                    server=settings["queue_server"],
-                    port=settings["queue_port"]
-                )
+        try:
+            for task in tasks:
+                if task.command != "":
+                    pysiq.enqueue(
+                        fn="functionWrapper",
+                        args=(task.name + '(' + task.id + ')', task.command),
+                        task_id=task.id,
+                        depend=(None if len(task.depend) == 0 else task.depend.split(",")),
+                        incompatible=None if len(task.incompatible) == 0 else task.incompatible.split(","),
+                        server=settings["queue_server"],
+                        port=settings["queue_port"]
+                    )
+                else:
+                    pysiq.enqueue(
+                        fn=task.function,
+                        args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
+                        task_id=task.id,
+                        depend=(None if len(task.depend) == 0 else task.depend.split(",")),
+                        incompatible=(None if len(task.incompatible) == 0 else task.incompatible.split(",")),
+                        server=settings["queue_server"],
+                        port=settings["queue_port"]
+                    )
 
-        return JsonResponse({'success': True, 'job_id': job.id})
+            return JsonResponse({'success': True, 'job_id': job.id})
+        except Exception as e:
+            return JsonResponse({'success': False, 'job_id': job.id, 'error_message': "Unreachable queue"})
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
     def upgrade(self, request, instance_name=None):
@@ -235,26 +238,28 @@ class JobViewSet(viewsets.ModelViewSet):
             task.status = "NEW"
             task.save()
             tasks.append(task)
+        try:
+            for task in tasks:
+                if task.command != "":
+                    pysiq.enqueue(
+                        fn=install_services_functions.functionWrapper,
+                        args=(task.name + '(' + task.id + ')', task.command),
+                        task_id= task.id,
+                        depend= None if len(task.depend) == 0 else task.depend.split(","),
+                        incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
+                    )
+                else:
+                    pysiq.enqueue(
+                        fn= getattr(install_services_functions, task.function),
+                        args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
+                        task_id= task.id,
+                        depend= None if len(task.depend) == 0 else task.depend.split(","),
+                        incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
+                    )
 
-        for task in tasks:
-            if task.command != "":
-                pysiq.enqueue(
-                    fn=install_services_functions.functionWrapper,
-                    args=(task.name + '(' + task.id + ')', task.command),
-                    task_id= task.id,
-                    depend= None if len(task.depend) == 0 else task.depend.split(","),
-                    incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
-                )
-            else:
-                pysiq.enqueue(
-                    fn= getattr(install_services_functions, task.function),
-                    args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
-                    task_id= task.id,
-                    depend= None if len(task.depend) == 0 else task.depend.split(","),
-                    incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
-                )
-
-        return JsonResponse({'success': True, 'job_id': job.id})
+            return JsonResponse({'success': True, 'job_id': job.id})
+        except Exception as e:
+            return JsonResponse({'success': False, 'job_id': job.id, 'error_message': "Unreachable queue"})
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
     def uninstall(self, request, instance_name=None):
@@ -296,29 +301,31 @@ class JobViewSet(viewsets.ModelViewSet):
             task.save()
             tasks.append(task)
 
-        for task in tasks:
-            if task.command != "":
-                pysiq.enqueue(
-                    fn="functionWrapper",
-                    args=(task.name + '(' + task.id + ')', task.command),
-                    task_id=task.id,
-                    depend=(None if len(task.depend) == 0 else task.depend.split(",")),
-                    incompatible=None if len(task.incompatible) == 0 else task.incompatible.split(","),
-                    server=settings["queue_server"],
-                    port=settings["queue_port"]
-                )
-            else:
-                pysiq.enqueue(
-                    fn=task.function,
-                    args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
-                    task_id=task.id,
-                    depend=(None if len(task.depend) == 0 else task.depend.split(",")),
-                    incompatible=(None if len(task.incompatible) == 0 else task.incompatible.split(",")),
-                    server=settings["queue_server"],
-                    port=settings["queue_port"]
-                )
-
-        return JsonResponse({'success': True, 'job_id': job.id})
+        try:
+            for task in tasks:
+                if task.command != "":
+                    pysiq.enqueue(
+                        fn="functionWrapper",
+                        args=(task.name + '(' + task.id + ')', task.command),
+                        task_id=task.id,
+                        depend=(None if len(task.depend) == 0 else task.depend.split(",")),
+                        incompatible=None if len(task.incompatible) == 0 else task.incompatible.split(","),
+                        server=settings["queue_server"],
+                        port=settings["queue_port"]
+                    )
+                else:
+                    pysiq.enqueue(
+                        fn=task.function,
+                        args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
+                        task_id=task.id,
+                        depend=(None if len(task.depend) == 0 else task.depend.split(",")),
+                        incompatible=(None if len(task.incompatible) == 0 else task.incompatible.split(",")),
+                        server=settings["queue_server"],
+                        port=settings["queue_port"]
+                    )
+            return JsonResponse({'success': True, 'job_id': job.id})
+        except Exception as e:
+            return JsonResponse({'success': False, 'job_id': job.id, 'error_message': "Unreachable queue"})
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
     def check_job_status(self, request, id=None):
@@ -327,6 +334,7 @@ class JobViewSet(viewsets.ModelViewSet):
         jobs = Job.objects.all()
 
         jobs_list = []
+        failed = False
         for job in jobs:
             tasks = Task.objects.filter(job_id=job.id)
             tasks_list = []
@@ -334,8 +342,11 @@ class JobViewSet(viewsets.ModelViewSet):
             for task in tasks:
                 if task.status != 'FINISHED' and task.status != 'FAILED':
                     not_finished += 1
-                    _status = pysiq.check_status(task.id)
-                    # _result = pysiq.get_result(task.id, remove=False)
+                    try:
+                        _status = pysiq.check_status(task.id)
+                        # _result = pysiq.get_result(task.id, remove=False)
+                    except Exception as ex:
+                        failed = True
                     #TODO: EVALUATE RESULT?
                     try:
                         _status = _status.status.upper().replace(" ", "_")
@@ -359,9 +370,12 @@ class JobViewSet(viewsets.ModelViewSet):
                 })
 
             #REMOVE ALL TASKS FROM QUEUE
-            if not_finished == 0:
-                for task in tasks:
-                    pysiq.get_result(task.id, remove=True)
+            try:
+                if not_finished == 0:
+                    for task in tasks:
+                        pysiq.get_result(task.id, remove=True)
+            except Exception as e:
+                failed = True
 
             jobs_list.append({
                 'id': job.id,
@@ -370,7 +384,7 @@ class JobViewSet(viewsets.ModelViewSet):
                 'tasks': tasks_list
             })
 
-        return JsonResponse({'success': True, 'jobs' : jobs_list})
+        return JsonResponse({'success': not failed, 'jobs' : jobs_list, 'error_message' : "Unreachable queue" if failed else ""})
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
     def get_job_log(self, request, id=None):
@@ -402,7 +416,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
             settings = self.read_settings(request)
 
-            install_services_functions.clean_data_handler(id, settings)
+            install_services_functions.clean_data_handler(id, settings, full=True)
             return JsonResponse({'success': True})
 
     #---------------------------------------------------------------

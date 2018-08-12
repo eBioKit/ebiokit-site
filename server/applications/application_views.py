@@ -267,21 +267,39 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             prev_value.value = settings["platform"]
             prev_value.save()
 
+        remote_servers = RemoteServer.objects.all()
         prev_value = RemoteServer.objects.get(enabled=True)
-        if settings["remote_server"]["name"] != "" and settings["remote_server"]["name"] != prev_value.name:
-            if settings["remote_server"]["url"] != "" and settings["remote_server"]["url"] != prev_value.url:
+        # First clean the list of available servers
+        for remote_server in remote_servers:
+            found = False
+            for new_server in settings.get("available_remote_servers"):
+                if new_server.get("name") == remote_server.name and new_server.get("url") == remote_server.url:
+                    found = True
+                    break
+            if not found:
+                remote_server.delete()
+
+        # Now check if new selection is valid
+        if "remote_server" in settings and settings.get("remote_server").get("name", "") != "" and settings.get("remote_server").get("url", "") != "":
+                # Disable current option
                 prev_value.enabled = False
                 prev_value.save()
-
+                # Now find the option by name
                 try:
-                    exist = RemoteServer.objects.get(url=settings["remote_server"]["url"])
-                    exist.name = settings["remote_server"]["name"]
-                    exist.url = settings["remote_server"]["url"]
+                    # If exists, update the values
+                    exist = RemoteServer.objects.get(name=settings.get("remote_server").get("name"))
+                    exist.name = settings.get("remote_server").get("name")
+                    exist.url = settings.get("remote_server").get("url")
                     exist.enabled = True
                     exist.save()
                 except:
-                    new_server = RemoteServer(name=settings["remote_server"]["name"], url=settings["remote_server"]["url"], enabled=True)
+                    # Else create a new entry
+                    new_server = RemoteServer(name=settings.get("remote_server").get("name"), url=settings.get("remote_server").get("url"), enabled=True)
                     new_server.save()
+        else:
+            # Else add the previous option again
+            prev_value.enabled = True
+            prev_value.save()
 
         if settings.has_key("admin_users") and settings["admin_users"] != "":
             # First invalidate the previous admin users
