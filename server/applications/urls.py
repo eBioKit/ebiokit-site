@@ -35,11 +35,6 @@ system_info = ApplicationViewSet.as_view({
     'get': 'system_info'
 }, renderer_classes=[renderers.JSONRenderer])
 
-ebiokit_machine_status = ApplicationViewSet.as_view({
-    'get': 'ebiokit_machine_status',
-    'post': 'ebiokit_machine_start'
-}, renderer_classes=[renderers.JSONRenderer])
-
 available_updates = ApplicationViewSet.as_view({
     'get': 'available_updates'
 }, renderer_classes=[renderers.JSONRenderer])
@@ -103,11 +98,11 @@ application_disable = ApplicationViewSet.as_view({
 }, renderer_classes=[renderers.JSONRenderer])
 
 application_prepare_install = JobViewSet.as_view({
-    'get': 'prepareInstall'
+    'get': 'prepare_install'
 }, renderer_classes=[renderers.JSONRenderer])
 
 application_prepare_upgrade = JobViewSet.as_view({
-    'get': 'prepareUpgrade'
+    'get': 'prepare_upgrade'
 }, renderer_classes=[renderers.JSONRenderer])
 
 application_install = JobViewSet.as_view({
@@ -123,12 +118,12 @@ application_uninstall = JobViewSet.as_view({
 }, renderer_classes=[renderers.JSONRenderer])
 
 application_jobs = JobViewSet.as_view({
-    'get': 'checkJobStatus',
-    'delete': 'deleteJob'
+    'get': 'check_job_status',
+    'delete': 'delete_job'
 }, renderer_classes=[renderers.JSONRenderer])
 
 application_jobs_log = JobViewSet.as_view({
-    'get': 'getJobLog'
+    'get': 'get_job_log'
 }, renderer_classes=[renderers.JSONRenderer])
 
 application_detail = ApplicationViewSet.as_view({
@@ -140,7 +135,6 @@ application_detail = ApplicationViewSet.as_view({
 
 urlpatterns = [
     url(r'^system-info/$', system_info, name='system-info'),
-    url(r'^ebiokit-machine-status/$', ebiokit_machine_status, name='ebiokit-machine-status'),
     url(r'^user/$', users, name='users'),
     url(r'^session/$', sessions, name='sessions'),
     url(r'^available-updates/$', available_updates, name='available-updates'),

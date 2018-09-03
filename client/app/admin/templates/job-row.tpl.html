@@ -1,5 +1,5 @@
-<div class="job-row clickable" ng-click="expanded[job.id]=!(expanded[job.id]===true)">
-	<a class="job-row-cell" style="text-align:left; width: 320px;" >
+<div class="job-row" >
+	<a class="job-row-cell clickable" style="text-align:left; width: 320px;" ng-click="expanded[job.id]=!(expanded[job.id]===true)" title="Click for details">
 		<i class="fa" ng-class="(expanded[job.id]===true)?'fa-caret-down':'fa-caret-right'" aria-hidden="true"></i> {{job.name}}
 	</a>
 	<p class="job-row-cell" class="job-row-cell" style="width: 150px;">
@@ -18,8 +18,8 @@
 		</div>
 	</div>
 	<p class="job-row-cell" style="width: 60px; vertical-align: middle; padding-left: 5px;">
-		<a class="clickable" ng-show="job.status !== 'Running'" ng-click="controller.removeJobHandler(job)" title="Delete job"> <i class="fa fa-trash text-danger" aria-hidden="true"></i></a>
-		<a class="clickable" ng-click="controller.getJobLogHandler(job)" title="Show log"><i class="fa fa-info-circle text-info" aria-hidden="true"></i></a>
+		<a class="clickable" ng-show="job.status !== 'Running'" ng-click="controller.removeJobHandler(job)" uib-tooltip="Delete job"> <i class="fa fa-trash text-danger" aria-hidden="true"></i></a>
+		<a class="clickable" ng-click="controller.getJobLogHandler(job)" uib-tooltip="Show log"><i class="fa fa-info-circle text-info" aria-hidden="true"></i></a>
 	</p>
 </div>
 <div class="job-row-tasks-table" ng-show="expanded[job.id] === true">

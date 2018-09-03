@@ -133,8 +133,6 @@
 				return myAppConfig.SERVER_URL + "api/system/system-settings/";
 				case "system-version":
 				return myAppConfig.SERVER_URL + "api/system/system-version/";
-				case "ebiokit-machine-status":
-				return myAppConfig.SERVER_URL + "api/system/ebiokit-machine-status/";
 				case "service-list":
 				return myAppConfig.SERVER_URL + "api/applications/";
 				case "service-info":
@@ -260,6 +258,10 @@
 
 		$scope.$on(APP_EVENTS.serviceStoreAction, function (event, args) {
 			me.changeCurrentServiceHandler('jobs-queue');
+		});
+
+		$scope.$on(APP_EVENTS.installNewServiceAction, function (event, args) {
+			me.changeCurrentServiceHandler('application-store');
 		});
 
 		this.changeCurrentServiceHandler = function(service){

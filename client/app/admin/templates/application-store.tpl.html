@@ -1,64 +1,68 @@
-<div ng-controller="ServiceListController as controller" ng-init="displayServices='installed'">
-	<div class="admin-section-title-div">
-		<div class="panel-body">
-			<h1>The eBioKit Store</h1>
-			<h3>Find trusted ready applications</h3>
-		</div>
-	</div>
-	<div class="admin-section-content-div">
-		<div class="panel-body">
-			<div class="col-sm-3" style="padding-left:70px;">
-				<h4>Filters</h4>
-				<hr>
-				<b style="text-transform: uppercase;">Display</b>
-				<div class="category-chooser clickable" ng-click="displayServices='installed'">
-					<i class="fa" ng-class="(displayServices === 'installed')?'fa-check-circle-o text-info':'fa-circle-o'" aria-hidden="true"></i> Installed
-				</div>
-				<div class="category-chooser clickable" ng-click="displayServices='all'">
-					<i class="fa" ng-class="(displayServices === 'all')?'fa-check-circle-o text-info':'fa-circle-o'" aria-hidden="true"></i> Available applications
-				</div>
-				<div class="category-chooser clickable" ng-click="displayServices='updates'">
-					<i class="fa" ng-class="(displayServices === 'updates')?'fa-check-circle-o text-info':'fa-circle-o'" aria-hidden="true"></i> Available updates
-				</div>
-				<hr>
-				<b style="text-transform: uppercase;">Categories</b>
-				<div>
-					<div class="category-chooser clickable" ng-repeat="category in categories | orderBy:'name'" ng-click="controller.clickCategorySelectorHandler(category);" >
-						<i ng-class="(category.selected)?'fa-check-square-o text-info':'fa-square-o'" class="fa" aria-hidden="true"></i>
-						{{category.name}}
-					</div>
-				</div>
-				<hr>
-				<div style="text-align:center;">
-					<a class="clickable text-info" ng-click="controller.refreshStoreContent();"><i class="fa fa-refresh"></i> Refresh list</a>
-					<p class="text-info" style="font-size:10px;">Source: <a href="{{repository_url}}" target="_blank">{{repository_name}}</a></p>
-				</div>
-			</div>
-			<div class="col-sm-9">
-				<div style="text-align: center; margin-bottom: 20px;">
-					<div style="max-width: 500px; display: block; margin: 20px auto;">
-						<div class="input-group" style="width: 100%;">
-							<input type="text" class="form-control" placeholder="Search for..." ng-model="searchFor" ng-enter="controller.applySearchHandler()">
-							<span class="input-group-btn">
+<div ng-controller="ServiceListController as controller">
+  <div class="admin-section-title-div">
+    <div class="panel-body">
+      <h1>The eBioKit Store</h1>
+      <h3>Find trusted ready applications</h3>
+    </div>
+  </div>
+  <div class="admin-section-content-div">
+    <div class="panel-body">
+      <div class="col-sm-3" style="padding-left:70px;">
+        <h4>Filters</h4>
+        <hr>
+        <b style="text-transform: uppercase;">Display</b>
+        <div class="category-chooser clickable" ng-click="displayServices='installed'">
+          <i class="fa" ng-class="(displayServices === 'installed')?'fa-check-circle-o text-info':'fa-circle-o'" aria-hidden="true"></i> Installed
+        </div>
+        <div class="category-chooser clickable" ng-click="displayServices='all'">
+          <i class="fa" ng-class="(displayServices === 'all')?'fa-check-circle-o text-info':'fa-circle-o'" aria-hidden="true"></i> Available applications
+        </div>
+        <div class="category-chooser clickable" ng-click="displayServices='updates'">
+          <i class="fa" ng-class="(displayServices === 'updates')?'fa-check-circle-o text-info':'fa-circle-o'" aria-hidden="true"></i> Available updates
+        </div>
+        <hr>
+        <b style="text-transform: uppercase;">Categories</b>
+        <div>
+          <div class="category-chooser clickable" ng-repeat="category in categories | orderBy:'name'" ng-click="controller.clickCategorySelectorHandler(category);">
+            <i ng-class="(category.selected)?'fa-check-square-o text-info':'fa-square-o'" class="fa" aria-hidden="true"></i> {{category.name}}
+          </div>
+        </div>
+        <hr>
+        <div style="text-align:center;">
+          <a class="clickable text-info" ng-click="controller.refreshStoreContent();"><i class="fa fa-refresh"></i> Refresh list</a>
+          <p class="text-info" style="font-size:10px;">Source: <a href="{{repository_url}}" target="_blank">{{repository_name}}</a></p>
+        </div>
+      </div>
+      <div class="col-sm-9">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="max-width: 500px; display: block; margin: 20px auto;">
+            <div class="input-group" style="width: 100%;">
+              <input type="text" class="form-control" placeholder="Search for..." ng-model="searchFor" ng-enter="controller.applySearchHandler()">
+              <span class="input-group-btn">
 								<button class="btn btn-default" type="button" ng-click="controller.applySearchHandler()">
 									<span class="glyphicon glyphicon-search"></span>
-								</button>
-							</span>
-						</div><!-- /input-group -->
-						<div class="search-tag-container">
-							<i class="label label-primary" ng-repeat="item in filters">
+              </button>
+              </span>
+            </div>
+            <!-- /input-group -->
+            <div class="search-tag-container">
+              <i class="label label-primary" ng-repeat="item in filters">
 								<span class="tag-name">
-									<i class="fa fa-times clickable" ng-click="controller.removeFilterHandler(item);"></i>  {{item}}
-								</span>
-							</i>
-						</div>
-					</div>
-				</div>
-				<service-store-row ng-repeat="service in services | filter:filterServices() as filtered"></service-store-row>
-				<h2 style="text-align: center; margin-top: 50px; color: #dadada; text-shadow: 0px 0px 17px #f1f1f1;" ng-if="displayServices==='installed' && filtered.length === 0">No services are installed</h2>
-				<h2 style="text-align: center; margin-top: 50px; color: #dadada; text-shadow: 0px 0px 17px #f1f1f1;"ng-if="displayServices==='all' && filtered.length === 0">No services are available</h2>
-				<h2 style="text-align: center; margin-top: 50px; color: #dadada; text-shadow: 0px 0px 17px #f1f1f1;"ng-if="displayServices==='updates' && filtered.length === 0">No updates are available</h2>
-			</div>
-		</div>
-	</div>
+									<i class="fa fa-times clickable" ng-click="controller.removeFilterHandler(item);"></i> {{item}}
+              </span>
+              </i>
+            </div>
+          </div>
+          <a class="clickable" ng-click="controller.refreshStoreContent();" style="position: absolute; top: 30px; right: 20px;"><i class="fa fa-refresh"></i> Refresh list</a>
+        </div>
+        <service-store-row ng-repeat="service in services | filter:filterServices() as filtered"></service-store-row>
+        <div class="store-grey-title" ng-show="displayServices==='installed' && filtered.length === 0">
+          <h2>No services are installed</h2>
+          <a class="clickable" ng-click="displayServices='all'">Show available services.</a>
+        </div>
+        <h2 class="store-grey-title" ng-if="displayServices==='all' && filtered.length === 0">No services are available</h2>
+        <h2 class="store-grey-title" ng-if="displayServices==='updates' && filtered.length === 0">No updates are available</h2>
+      </div>
+    </div>
+  </div>
 </div>
