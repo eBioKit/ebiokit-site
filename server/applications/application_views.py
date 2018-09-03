@@ -62,24 +62,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         })
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
-    def ebiokit_machine_status(self, request):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-        settings = self.read_settings(request)
-        command = "status"
-        command = osPath.join(osPath.dirname(osPath.realpath(__file__)), '../admin_tools/ebiokit_launcher.sh') + ' "' + settings.get("ebiokit_host") + '" "' + settings.get("ebiokit_password") + '" "' + settings.get("platform") + '" "' + command + '"'
-        output = subprocess.check_output(['bash', '-c', command])
-        return JsonResponse({'ebiokit_machine_status': output.rstrip()})
-
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
-    def ebiokit_machine_start(self, request):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-        settings = self.read_settings(request)
-        command = "startup"
-        command = osPath.join(osPath.dirname(osPath.realpath(__file__)), '../admin_tools/ebiokit_launcher.sh') + ' "' + settings.get("ebiokit_host") + '" "' + settings.get("ebiokit_password") + '" "' + settings.get("platform") + '" "' + command + '"'
-        output = subprocess.check_output(['bash', '-c', command])
-        return JsonResponse({'success': "true"})
-
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
     def available_updates(self, request, name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -246,8 +228,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         if not osPath.exists(settings["nginx_data_location"]) or not osAccess(settings["nginx_data_location"], osWritable):
             settings["messages"]["nginx_data_location"] = "Invalid directory. Check if directory exists and if is writable."
 
-        settings["ebiokit_host"] = Settings.objects.get(name="ebiokit_host").value
-        settings["ebiokit_password"] = Settings.objects.get(name="ebiokit_password").value
         settings["platform"] = Settings.objects.get(name="platform").value
 
         remote_servers = RemoteServer.objects.values()
@@ -282,36 +262,44 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             prev_value.value = settings["nginx_data_location"].rstrip("/") + "/"
             prev_value.save()
 
-        prev_value = Settings.objects.get(name="ebiokit_host")
-        if settings["ebiokit_host"] != "" and settings["ebiokit_host"] != prev_value.value:
-            prev_value.value = settings["ebiokit_host"]
-            prev_value.save()
-
-        prev_value = Settings.objects.get(name="ebiokit_password")
-        if settings["ebiokit_password"] != "" and settings["ebiokit_password"] != prev_value.value:
-            prev_value.value = settings["ebiokit_password"]
-            prev_value.save()
-
         prev_value = Settings.objects.get(name="platform")
         if settings["platform"] != "" and settings["platform"] != prev_value.value:
             prev_value.value = settings["platform"]
             prev_value.save()
 
+        remote_servers = RemoteServer.objects.all()
         prev_value = RemoteServer.objects.get(enabled=True)
-        if settings["remote_server"]["name"] != "" and settings["remote_server"]["name"] != prev_value.name:
-            if settings["remote_server"]["url"] != "" and settings["remote_server"]["url"] != prev_value.url:
+        # First clean the list of available servers
+        for remote_server in remote_servers:
+            found = False
+            for new_server in settings.get("available_remote_servers"):
+                if new_server.get("name") == remote_server.name and new_server.get("url") == remote_server.url:
+                    found = True
+                    break
+            if not found:
+                remote_server.delete()
+
+        # Now check if new selection is valid
+        if "remote_server" in settings and settings.get("remote_server").get("name", "") != "" and settings.get("remote_server").get("url", "") != "":
+                # Disable current option
                 prev_value.enabled = False
                 prev_value.save()
-
+                # Now find the option by name
                 try:
-                    exist = RemoteServer.objects.get(url=settings["remote_server"]["url"])
-                    exist.name = settings["remote_server"]["name"]
-                    exist.url = settings["remote_server"]["url"]
+                    # If exists, update the values
+                    exist = RemoteServer.objects.get(name=settings.get("remote_server").get("name"))
+                    exist.name = settings.get("remote_server").get("name")
+                    exist.url = settings.get("remote_server").get("url")
                     exist.enabled = True
                     exist.save()
                 except:
-                    new_server = RemoteServer(name=settings["remote_server"]["name"], url=settings["remote_server"]["url"], enabled=True)
+                    # Else create a new entry
+                    new_server = RemoteServer(name=settings.get("remote_server").get("name"), url=settings.get("remote_server").get("url"), enabled=True)
                     new_server.save()
+        else:
+            # Else add the previous option again
+            prev_value.enabled = True
+            prev_value.save()
 
         if settings.has_key("admin_users") and settings["admin_users"] != "":
             # First invalidate the previous admin users

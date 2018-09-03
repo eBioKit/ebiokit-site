@@ -19,7 +19,12 @@ def check_status(task_id, server="localhost", port=4444, protocol="http"):
 
 def get_result(task_id, remove=False, server="localhost", port=4444, protocol="http"):
     server = protocol + "://" + server.replace(protocol + "://", "").rstrip("/") + ":" + str(port)
-    response = requests.get(server + "/api/result/" + task_id)
+    response = requests.get(server + "/api/result/" + task_id + ("?remove=1" if remove else ""))
+    return Response(json.loads(response.text))
+
+def remove_task(task_id, server="localhost", port=4444, protocol="http"):
+    server = protocol + "://" + server.replace(protocol + "://", "").rstrip("/") + ":" + str(port)
+    response = requests.delete(server + "/api/remove/" + task_id)
     return Response(json.loads(response.text))
 
 class Response(object):

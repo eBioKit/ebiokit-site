@@ -19,7 +19,7 @@
 	</td>
 	<td width="210px;">
 		<span ng-show="!service.enabled">-</span>
-		<i ng-show="service.enabled && service.status === undefined" class="fa fa-spinner fa-pulse fa-fw"></i>
+		<p ng-show="service.enabled && service.status === undefined">-</p>
 		<span ng-show="service.enabled && service.status !== undefined" >
 			<a ng-show="service.status !== 'STOPPED'" class="clickable" style="margin-right: 10px;" ng-click="controller.stopServiceHandler(service)">
 				<i class="fa fa-stop text-danger"></i> Stop
@@ -36,11 +36,11 @@
 		</span>
 	</td>
 	<td width="150px;">
-		<span class="clickable" ng-show="service.enabled" >
+		<span class="clickable" ng-show="service.enabled" ng-click="controller.disableServiceHandler(service)">
 			<i class="fa fa-toggle-on text-success"></i>
 			<b class="text-success">Enabled</b>
 		</span>
-		<span class="clickable" ng-show="!service.enabled" >
+		<span class="clickable" ng-show="!service.enabled" ng-click="controller.enableServiceHandler(service)">
 			<i class="fa fa-toggle-off text-danger"></i>
 			<b class="text-danger">Disabled</b>
 		</span>
