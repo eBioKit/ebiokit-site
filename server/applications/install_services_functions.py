@@ -65,6 +65,7 @@ def docker_pull_handler(task_id, docker_name, settings=None):
         log(working_dir, "docker_pull_handler - Failed: " + str(e), task_id)
         raise e
 
+
 def download_file_handler(task_id, url, settings):
     """
     This function handles the tasks "download data" to download remote data from centralhub
@@ -84,6 +85,7 @@ def download_file_handler(task_id, url, settings):
     except Exception as e:
         log(working_dir, "download_file_handler - Failed: " + str(e), task_id)
         raise e
+
 
 def checksum_data_handler(task_id, settings=None):
     """
@@ -105,6 +107,7 @@ def checksum_data_handler(task_id, settings=None):
     except Exception as e:
         log(working_dir, "checksum_data_handler - Failed: " + str(e), task_id)
         raise e
+
 
 def extract_data_handler(task_id, settings=None):
     """
@@ -139,6 +142,7 @@ def extract_data_handler(task_id, settings=None):
         log(working_dir, "extract_data_handler - Failed: " + str(e), task_id)
         raise e
 
+
 def register_service_handler(task_id, instance_name=None, settings=None):
     """
     This function registers a new service in the ebiokit environment.
@@ -162,7 +166,16 @@ def register_service_handler(task_id, instance_name=None, settings=None):
         django.setup()
         from applications.models import Application
 
-        service = Application()
+        try:
+            service = Application.objects.get(instance_name=instance_name)
+            if service is None:
+                log(working_dir, "register_service_handler - Service was not in database...", task_id)
+                raise Exception("Object not found in db")
+            else:
+                log(working_dir, "register_service_handler - Service was already in database...", task_id)
+        except Exception as e:
+            service = Application()
+
         service.instance_name = instance_name
         service.title = settings.get("INSTANCE_TITLE", data.get("title"))
         service.description = data.get("description")
@@ -198,6 +211,7 @@ def register_service_handler(task_id, instance_name=None, settings=None):
         log(working_dir, "register_service_handler - Failed: " + str(e), task_id)
         raise e
 
+
 def clean_data_handler(task_id, settings=None, full=False):
     """
     This function cleans all the temporary data.
@@ -228,6 +242,7 @@ def clean_data_handler(task_id, settings=None, full=False):
     except Exception as e:
         log(working_dir, "clean_data_handler - Failed: " + str(e), task_id)
         raise e
+
 
 def stop_service_handler(task_id, instance_name=None, dockers="", settings=None):
     """
@@ -292,7 +307,7 @@ def unregister_service_handler(task_id, instance_name=None, dockers="", settings
 def remove_service_data_handler(task_id, instance_name=None, dockers="", settings=None):
     try:
         working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
-        #REMOVE THE PROXY CONF
+        #REMOVE THE PROX.Y CONF
         if os.path.isfile(settings.get("nginx_data_location") + instance_name + ".upstream"):
             log(working_dir, "remove_service_data_handler - Delete the NGINX UPSTREAM file...", task_id)
             os.remove(settings.get("nginx_data_location") + instance_name + ".upstream")
@@ -309,7 +324,7 @@ def remove_service_data_handler(task_id, instance_name=None, dockers="", setting
             log(working_dir, "remove_service_data_handler - Delete the uninstaller file...", task_id)
             os.remove(settings.get("ebiokit_data_location") + "ebiokit-services/uninstallers/" + instance_name + ".json")
         #REMOVE THE DATA FILEs
-        if os.path.isdir(settings.get("ebiokit_data_location") + "ebiokit-data/" + instance_name):
+        if not settings.get("keep_data", False) and os.path.isdir(settings.get("ebiokit_data_location") + "ebiokit-data/" + instance_name):
             log(working_dir, "remove_service_data_handler - Delete the instance data...", task_id)
             command = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/data_manager.sh') + ' "remove" ' + settings.get("ebiokit_data_location") + "ebiokit-data/" + instance_name + "/"
             output = subprocess.check_output(['bash', '-c', command])

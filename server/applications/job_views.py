@@ -61,19 +61,21 @@ class JobViewSet(viewsets.ModelViewSet):
         :param instance_name:
         :return:
         """
-        # First we validate that user is a valid ADMIN user
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 0. First we validate that user is a valid ADMIN user
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-
-        # Now send the request to the centralhub
-        mainRemoteServer = RemoteServer.objects.get(enabled=1)
-        r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/" + instance_name + "/prepare-install")
-
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 1. Now send the request to the centralhub
+        main_remote_server = RemoteServer.objects.get(enabled=1)
+        r = requests.get(main_remote_server.url.rstrip("/") + "/api/" + instance_name + "/prepare-install")
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 2. If we can't find a valid settings file for requested version, fail
         if r.status_code != 200 or r.json().get("success") == False:
-            response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve installation settings for service from ' + mainRemoteServer.name})
+            response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve installation settings for service from ' + main_remote_server.name})
             response.status_code = 500
             return response
-
-        # Finally, check the currently installed services and get the invalid settings to avoid collisions
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 3. Finally check al the services that are already installed and get the invalid settings to avoid collisions
         invalid_options = self.get_current_settings()
 
         return JsonResponse({'success': True, 'settings' : r.json().get("settings"), "invalid_options" : invalid_options})
@@ -87,65 +89,72 @@ class JobViewSet(viewsets.ModelViewSet):
         :param instance_name:
         :return:
         """
-        # First we validate that user is a valid ADMIN user
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 0. First we validate that user is a valid ADMIN user
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-        # Now send the request to the centralhub
-        mainRemoteServer = RemoteServer.objects.get(enabled=1)
-        candidate = request.GET.get('candidate', '')
-        r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/" + candidate + "/prepare-install")
-
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 1. Now we get the requested version from params
+        candidate_version = request.GET.get('candidate', '')
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 2. Now send the request to the centralhub
+        main_remote_server = RemoteServer.objects.get(enabled=1)
+        r = requests.get(main_remote_server.url.rstrip("/") + "/api/" + candidate_version + "/prepare-install")
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 3. If we can't find a valid settings file for requested version, fail
         if r.status_code != 200 or r.json().get("success") == False:
-            response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve installation settings for service from ' + mainRemoteServer.name})
+            response = JsonResponse({'success': False, 'error_message': 'Unable to retrieve upgrading settings for service from ' + main_remote_server.name})
             response.status_code = 500
             return response
-
-        # Check the currently installed services and get the invalid settings to avoid collisions
-        invalid_options = self.get_current_settings(ignore=[instance_name])
-
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 4. Otherwise, we need to fill the settings for installation with the values for the current instance (the one that we
+        #         want to upgrade)
+        # Step 4.1 First get the service from database
         service = Application.objects.filter(instance_name=instance_name)[:1]
-        if (len(service) == 0):
-            response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve installation settings for service from ' + mainRemoteServer.name})
+        if len(service) == 0:
+            response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve installation settings for service from ' + main_remote_server.name})
             response.status_code = 500
             return response
-
+        # Step 4.2 Now load the installation settings that are saved in db
         current_options = json.loads(service[0].raw_options)
         settings = r.json().get("settings")
-
+        # Step 4.3 Finally replace the default values by the corresponding values in current instance
         for setting in settings:
             setting["default"] = current_options.get(setting["name"], setting.get("default", ""))
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 5. Finally check al the services that are already installed and get the invalid settings to avoid collisions
+        invalid_options = self.get_current_settings(ignore=[instance_name])
 
         return JsonResponse({'success': True, 'settings' : settings, "invalid_options" : invalid_options})
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
     def install(self, request, instance_name=None):
-        # First we validate that user is a valid ADMIN user
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 0. First we validate that user is a valid ADMIN user and read the params from request
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-
         settings = self.read_settings(request)
-
+        # -------------------------------------------------------------------------------------------------------------
         # Step 1. Get the installation instructions from the centralhub
-        mainRemoteServer = RemoteServer.objects.get(enabled=1)
-        r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/" + instance_name + "/install")
-
+        main_remote_server = RemoteServer.objects.get(enabled=1)
+        r = requests.get(main_remote_server.url.rstrip("/") + "/api/" + instance_name + "/install")
+        # If we can't find a valid settings file for requested version, fail
         if r.status_code != 200 or r.json().get("success") == False:
-            response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve installation instructions for service from ' + mainRemoteServer.name})
+            response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve installation instructions for service from ' + main_remote_server.name})
             response.status_code = 500
             return response
         instructions = r.json().get("instructions")
-
+        # -------------------------------------------------------------------------------------------------------------
         # Step 2. Create a new instance of job and register it in the database.
         job = Job()
         job.name = instructions.get("job_name")
         job.id = self.get_new_job_id()
         job.date = datetime.datetime.now().strftime("%Y%m%d%H%M")
         job.save()
-
+        # -------------------------------------------------------------------------------------------------------------
         # Step 3. For each task in the job, create a new instance of Task and register it in the database.
         tasks = []
         for instruction in instructions.get("tasks"):
             if instruction.get("run-if", "install") != "install":
                 continue
-
             task = Task()
             task.id = job.id + "_" + str(instruction.get("id"))
             task.job_id = job.id
@@ -164,7 +173,7 @@ class JobViewSet(viewsets.ModelViewSet):
             task.status = "NEW"
             task.save()
             tasks.append(task)
-
+        # -------------------------------------------------------------------------------------------------------------
         # Step 4. Finally, enqueue all the tasks in the queue
         try:
             for task in tasks:
@@ -195,31 +204,89 @@ class JobViewSet(viewsets.ModelViewSet):
 
     @detail_route(renderer_classes=[renderers.JSONRenderer])
     def upgrade(self, request, instance_name=None):
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 0. First we validate that user is a valid ADMIN user and read the params from request
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-
+        # Get the settings for the instance from params
         settings = self.read_settings(request)
-
-        #Step 1. Get all services from remote server
-        mainRemoteServer = RemoteServer.objects.get(enabled=1)
-        candidate = request.data.get("candidate")
-        r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/" + candidate + "/upgrade")
+        # Now we get the requested version from params
+        candidate_version = request.data.get("candidate")
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 1. Get the installation instructions from the centralhub
+        main_remote_server = RemoteServer.objects.get(enabled=1)
+        r = requests.get(main_remote_server.url.rstrip("/") + "/api/" + candidate_version + "/upgrade")
+        # If we can't find a valid settings file for requested version, fail
         if r.status_code != 200 or r.json().get("success") == False:
-            response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve upgrading instructions for service from ' + mainRemoteServer.name})
+            response = JsonResponse({'success': False, 'error_message' : 'Unable to retrieve upgrading instructions for service from ' + main_remote_server.name})
             response.status_code = 500
             return response
-        instructions = r.json().get("instructions")
+        instructions_1 = r.json().get("instructions")
+        # Step 2. Get the uninstall instructions from the data repository
+        service = Application.objects.filter(instance_name=instance_name)[:1]
+        if (len(service) == 0):
+            return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
+        instructions_2 = json.loads(open(settings.get("ebiokit_data_location") + "ebiokit-services/uninstallers/" + instance_name + ".json", "r").read())
 
+        # Locate the instruction that indicates the position where uninstall instruction should be inserted
+        uninstall_id = -1
+        uninstall_pos = -1
+        uninstall_depend = []
+        tasks = instructions_1.get("tasks")
+        for i in range(len(tasks)):
+            task = tasks[i]
+            if task.get("function") == "uninstall_service":
+                uninstall_id = task.get("id")
+                settings["keep_data"] = "keep_data" in task.get("params")
+                uninstall_depend = tasks[i].get("depend")
+                uninstall_pos = i
+                del tasks[i] # Remove the instruction
+                break
+
+        if uninstall_id != -1:
+            # Now update the ids and dependencies for all the tasks in "uninstall" instructions
+            tasks = instructions_2.get("tasks")
+            max_id=-1
+            for task in tasks:
+                # E.g if id is 2 and uninstall_id is 8, new ID would be 10
+                task["id"] = task["id"] + uninstall_id
+                max_id = max(max_id, task.get("id"))
+                # If no dependency was indicated -> now should be the same than uninstall_depend task
+                if task.get("depend") is None:
+                    task["depend"] = uninstall_depend
+                else:
+                    # Otherwise, if there are dependencies, update with the new ids (e.g. if depends on tasks 1 and 3 -> new depend. will be 9 and 11).
+                    for i in range(len(task["depend"])):
+                        task["depend"][i] = task["depend"][i] + uninstall_id
+            # Here, uninstall instructions should be ready to be merged
+            # But we need first to update all the tasks in "update" instructions where the ID and the dependencies will change do to the new tasks
+            tasks = instructions_1.get("tasks")
+            for task in tasks:
+                # E.g. If we added 4 new tasks (max_id is 11), the original task 9 should be converted to 9 + (11 - 8) = 12
+                if task.get("id") > uninstall_id:
+                    task["id"] = task["id"] + (max_id - uninstall_id)
+                # Now update then dependencies using the same idea. If task 11, depended on 8 and 10 -> now should be 11 and 13
+                for i in range(len(task.get("depend", []))):
+                    if task["depend"][i] >= uninstall_id:
+                        task["depend"][i] = task["depend"][i] + (max_id - uninstall_id)
+            # Finally, we merge both lists of instructions
+            new_tasks = instructions_1.get("tasks")
+            for task in instructions_2.get("tasks"):
+                new_tasks.insert(uninstall_pos, task)
+                uninstall_pos += 1
+
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 2. Create a new instance of job and register it in the database.
         job = Job()
-        job.name = instructions.get("job_name")
+        job.name = instructions_1.get("job_name")
         job.id = self.get_new_job_id()
         job.date = datetime.datetime.now().strftime("%Y%m%d%H%M")
         job.save()
-
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 3. For each task in the job, create a new instance of Task and register it in the database.
         tasks = []
-        for instruction in instructions.get("tasks"):
-            if instruction.get("run-if", "install") != "install":
+        for instruction in instructions_1.get("tasks"):
+            if instruction.get("run-if", "upgrade") != "upgrade":
                 continue
-
             task = Task()
             task.id = job.id + "_" + str(instruction.get("id"))
             task.job_id = job.id
@@ -230,7 +297,7 @@ class JobViewSet(viewsets.ModelViewSet):
                 task.function = instruction.get("function")
 
             if instruction.has_key("params"):
-                task.params= ','.join([str(x) for x in instruction.get("params")])
+                task.params = ','.join([str(x) for x in instruction.get("params")])
                 task.params = task.params.replace("$${INSTANCE_NAME}", settings.get("INSTANCE_NAME"))
 
             task.depend = ",".join((job.id + "_" + str(n)) for n in instruction.get("depend", ""))
@@ -238,23 +305,29 @@ class JobViewSet(viewsets.ModelViewSet):
             task.status = "NEW"
             task.save()
             tasks.append(task)
+        # -------------------------------------------------------------------------------------------------------------
+        # Step 4. Finally, enqueue all the tasks in the queue
         try:
             for task in tasks:
                 if task.command != "":
                     pysiq.enqueue(
-                        fn=install_services_functions.functionWrapper,
+                        fn="functionWrapper",
                         args=(task.name + '(' + task.id + ')', task.command),
-                        task_id= task.id,
-                        depend= None if len(task.depend) == 0 else task.depend.split(","),
-                        incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
+                        task_id=task.id,
+                        depend=(None if len(task.depend) == 0 else task.depend.split(",")),
+                        incompatible=None if len(task.incompatible) == 0 else task.incompatible.split(","),
+                        server=settings["queue_server"],
+                        port=settings["queue_port"]
                     )
                 else:
                     pysiq.enqueue(
-                        fn= getattr(install_services_functions, task.function),
+                        fn=task.function,
                         args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
-                        task_id= task.id,
-                        depend= None if len(task.depend) == 0 else task.depend.split(","),
-                        incompatible= None if len(task.incompatible) == 0 else task.incompatible.split(",")
+                        task_id=task.id,
+                        depend=(None if len(task.depend) == 0 else task.depend.split(",")),
+                        incompatible=(None if len(task.incompatible) == 0 else task.incompatible.split(",")),
+                        server=settings["queue_server"],
+                        port=settings["queue_port"]
                     )
 
             return JsonResponse({'success': True, 'job_id': job.id})
@@ -267,6 +340,7 @@ class JobViewSet(viewsets.ModelViewSet):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
         settings = self.read_settings(request)
+        settings["keep_data"] = False
 
         # Step 1. Get the uninstall instructions from the data repository
         service = Application.objects.filter(instance_name=instance_name)[:1]
