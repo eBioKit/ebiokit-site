@@ -8,6 +8,10 @@ EBIOKIT_USER="ebiokit"
 
 # --------------------------------------------------------------------------------
 # Step 1. Install general dependencies
+# sudo add-apt-repository main
+# sudo add-apt-repository universe
+# sudo add-apt-repository restricted
+# sudo add-apt-repository multiverse
 sudo apt-get update
 sudo apt-get install python-pip build-essential nginx uwsgi git uwsgi-plugin-python
 sudo pip install --upgrade pip
@@ -45,10 +49,13 @@ sudo usermod -aG docker $EBIOKIT_USER
 # --------------------------------------------------------------------------------
 # Step 4. Install eBioKit application
 # Step 4.1 Get the latest version of the eBioKit application
+# sudo mkdir /data
+# sudo chown $USER:$USER .
 cd /data/
 git clone https://github.com/eBioKit/ebiokit-site.git
 cd ebiokit-site/
 git checkout minified
+git clone https://github.com/fikipollo/PySiQ.git queue/
 sudo ln -s /data/ebiokit-site/server $EBIOKIT_WWW_DIRECTORY/ebiokit
 sudo ln -s /data/ebiokit-site/queue $EBIOKIT_WWW_DIRECTORY/queue
 sudo chown -R $EBIOKIT_USER:$EBIOKIT_USER $EBIOKIT_WWW_DIRECTORY"/ebiokit"
@@ -77,8 +84,10 @@ mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/uninstallers
 # Step 4.7 Initialize the default settings for UWSGI and the PySiQ
 cp config/default/uwsgi_params /data/ebiokit-data/nginx/uwsgi_params
 cp config/default/uwsgi.ini /data/ebiokit-data/nginx/uwsgi.ini
-sed 's#$${EBIOKIT_WWW_DIRECTORY}#'${EBIOKIT_WWW_DIRECTORY}'\/ebiokit#g' config/default/queue.cfg > /var/www/queue/server.cfg
+cp config/default/queue_uwsgi.ini /data/ebiokit-data/nginx/queue_uwsgi.ini
+sed 's#$${EBIOKIT_WWW_DIRECTORY}#'${EBIOKIT_WWW_DIRECTORY}'\/ebiokit#g' config/default/queue.cfg > $EBIOKIT_WWW_DIRECTORY/queue/server.cfg
 sudo chown -R $EBIOKIT_USER:$EBIOKIT_USER /data/ebiokit-data/
+sudo chown -R $EBIOKIT_USER:$EBIOKIT_USER /data/ebiokit-site/
 
 # --------------------------------------------------------------------------------
 # Step 5. Install docker requirements
@@ -89,12 +98,15 @@ sudo docker pull ebiokit/ultraextract
 sudo service nginx stop
 sudo cp config/default/nginx-default-server /etc/nginx/sites-enabled/default
 sudo service nginx start
+#sudo service nginx status
 
 # --------------------------------------------------------------------------------
 # Step 7. Launch UWSGI server
 cd /data/ebiokit-data/nginx
 sudo uwsgi --ini uwsgi.ini
 # TO STOP USE sudo kill -9 `cat /tmp/ebiokit.pid`; sudo rm /tmp/ebiokit.*
+sudo uwsgi --ini queue_uwsgi.ini
+# TO STOP USE sudo kill -9 `cat /tmp/ebiokit_queue.pid`; sudo rm /tmp/ebiokit_queue.*
 
 #TODO: RUN THE QUEUE
 #TODO: CHANGE THE QUEUE FUNCTIONS LOCATION
