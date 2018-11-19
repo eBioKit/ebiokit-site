@@ -4,7 +4,6 @@
 # Step 0. Define const
 EBIOKIT_WWW_DIRECTORY="/var/www"
 EBIOKIT_USER="ebiokit"
-# vGH9HmDA?LtuZwY!
 
 # --------------------------------------------------------------------------------
 # Step 1. Install general dependencies
@@ -13,7 +12,9 @@ EBIOKIT_USER="ebiokit"
 # sudo add-apt-repository restricted
 # sudo add-apt-repository multiverse
 sudo apt-get update
-sudo apt-get install python-pip build-essential nginx uwsgi git uwsgi-plugin-python
+sudo apt-get install build-essential nginx uwsgi git uwsgi-plugin-python
+curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+sudo python /tmp/get-pip.py
 sudo pip install --upgrade pip
 
 # --------------------------------------------------------------------------------
@@ -50,7 +51,7 @@ sudo usermod -aG docker $EBIOKIT_USER
 # Step 4. Install eBioKit application
 # Step 4.1 Get the latest version of the eBioKit application
 # sudo mkdir /data
-# sudo chown $USER:$USER .
+# sudo chown $USER:$USER /data
 cd /data/
 git clone https://github.com/eBioKit/ebiokit-site.git
 cd ebiokit-site/
@@ -83,8 +84,8 @@ mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/launchers
 mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/uninstallers
 # Step 4.7 Initialize the default settings for UWSGI and the PySiQ
 cp config/default/uwsgi_params /data/ebiokit-data/nginx/uwsgi_params
-cp config/default/uwsgi.ini /data/ebiokit-data/nginx/uwsgi.ini
-cp config/default/queue_uwsgi.ini /data/ebiokit-data/nginx/queue_uwsgi.ini
+cp config/default/uwsgi-ini-linux /data/ebiokit-data/nginx/uwsgi.ini
+cp config/default/queue-uwsgi-ini-linux /data/ebiokit-data/nginx/queue_uwsgi.ini
 sed 's#$${EBIOKIT_WWW_DIRECTORY}#'${EBIOKIT_WWW_DIRECTORY}'\/ebiokit#g' config/default/queue.cfg > $EBIOKIT_WWW_DIRECTORY/queue/server.cfg
 sudo chown -R $EBIOKIT_USER:$EBIOKIT_USER /data/ebiokit-data/
 sudo chown -R $EBIOKIT_USER:$EBIOKIT_USER /data/ebiokit-site/

@@ -1,76 +1,107 @@
 #!/bin/bash
 
-sudo port selfupdate
-sudo port upgrade outdated
+# --------------------------------------------------------------------------------
+# Step 0. Define const
+EBIOKIT_WWW_DIRECTORY="/usr/local/var/www"
+EBIOKIT_USER="ebiokit"
+EBIOKIT_GROUP="staff"
 
-sudo port install nginx git
+# --------------------------------------------------------------------------------
+# Step 1. Install general dependencies
+# Install Homebrew package system
+ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+# Install dependencies
+brew install wget nginx uwsgi htop
+# Root for docs is: /usr/local/var/www
+# By default the port is set to 8080 at  /usr/local/etc/nginx/nginx.conf.
+# We must edit this file and change default port to 80
+# Consequently, nginx needs to be run as sudo.
 #
-# sudo port install py27-pip
-# sudo port select --set pip pip27
-# which pip
+# nginx will load all files in /usr/local/etc/nginx/servers/.
+#
+# To have launchd start nginx now and restart at login:
+#   brew services start nginx
+# Or, if you don't want/need a background service you can just run:
+#   nginx
+curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+sudo python /tmp/get-pip.py
 
-# sudo pip install --upgrade pip
+sudo ln -s  /usr/local/var/www /var/www
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd $DIR
+# --------------------------------------------------------------------------------
+# Step 2. Install Docker CE
+# Please install Docker using the DMG image provided at the web.
 
-echo "Installing requirements"
-modules=$(cat requirements.txt )
-for m in $modules; do
-  sudo easy_install $m;
-done
+# --------------------------------------------------------------------------------
+# Step 3. Create the user that will launch the dockers and run the uwsgi server
+#sudo adduser $EBIOKIT_USER
+#sudo usermod -aG docker $EBIOKIT_USER
 
-cd /tmp
-wget http://projects.unbit.it/downloads/uwsgi-latest.tar.gz
-tar xzvf uwsgi-latest.tar.gz
-cd uwsgi-*
-make
-sudo cp uwsgi /usr/local/bin/
-
-
-cd ~/Downloads/
-wget https://github.com/eBioKit/ebiokit-site/archive/v18.02beta.tar.gz
-tar xzvf v18.02beta.tar.gz
-cd ebioki-site-*
-sudo mv server/ /var/www/ebiokit
-
-cd /var/www/ebiokit
-
-echo "Creating SECRET_KEY file at /etc/ebiokit_secretkey.txt"
+# --------------------------------------------------------------------------------
+# Step 4. Install eBioKit application
+# Step 4.1 Get the latest version of the eBioKit application
+# sudo mkdir /data
+# sudo chown $USER:staff /data
+cd /data/
+git clone https://github.com/eBioKit/ebiokit-site.git
+cd ebiokit-site/
+git checkout minified
+git clone https://github.com/fikipollo/PySiQ.git queue/
+sudo ln -s /data/ebiokit-site/server $EBIOKIT_WWW_DIRECTORY/ebiokit
+sudo ln -s /data/ebiokit-site/queue $EBIOKIT_WWW_DIRECTORY/queue
+sudo chown -R $EBIOKIT_USER:$EBIOKIT_GROUP $EBIOKIT_WWW_DIRECTORY"/ebiokit"
+sudo chown -R $EBIOKIT_USER:$EBIOKIT_GROUP $EBIOKIT_WWW_DIRECTORY"/queue"
+# Step 4.2 Install python requirements
+sudo -H pip install -r requirements.txt
+# Step 4.3 Create the SECRET_KEY for the Django application at /etc/ebiokit_secretkey.txt
 python -c 'import random; import string; print "".join([random.SystemRandom().choice(string.digits + string.letters + string.punctuation) for i in range(100)])' | sudo tee /etc/ebiokit_secretkey.txt
-
-echo "Preparing database"
+# Step 4.5 Initialize the database
+cd server/
+# Step 4.5.1 Erase the database
+python manage.py flush
+# Step 4.5.2 Prepare the database
 python manage.py migrate
+# Step 4.5.3 Fill the database with default values
 python manage.py loaddata config/default/*.json
-
-echo "Creating superuser for Django server"
+# Step 4.5.4 Create the superuser for database backend (only accesible if Debug enabled)
 python manage.py createsuperuser
-
-echo "Creating required directories"
+# Step 4.6 Create the required directories
 mkdir -p /data/ebiokit-data/nginx/sites-enabled/conf/
 mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-data
 mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-logs
 mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/init-scripts
 mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/launchers
 mkdir -p /data/ebiokit-data/ebiokit_components/ebiokit-services/uninstallers
+# Step 4.7 Initialize the default settings for UWSGI and the PySiQ
 cp config/default/uwsgi_params /data/ebiokit-data/nginx/uwsgi_params
-cp config/default/uwsgi.ini /data/ebiokit-data/nginx/uwsgi.ini
+cp config/default/uwsgi-ini-osx /data/ebiokit-data/nginx/uwsgi.ini
+cp config/default/queue-uwsgi-ini-osx /data/ebiokit-data/nginx/queue_uwsgi.ini
+sed 's#$${EBIOKIT_WWW_DIRECTORY}#'${EBIOKIT_WWW_DIRECTORY}'\/ebiokit#g' config/default/queue.cfg > $EBIOKIT_WWW_DIRECTORY/queue/server.cfg
+sudo chown -R $EBIOKIT_USER:$EBIOKIT_GROUP /data/ebiokit-data/
+sudo chown -R $EBIOKIT_USER:$EBIOKIT_GROUP /data/ebiokit-site/
 
-sudo mkdir /opt/local/etc/nginx/sites-enabled
-sudo mkdir /var/log/nginx/
-sudo mkdir /var/log/uwsgi
-sudo chown -R ebioadmin:staff /var/log/uwsgi
+# --------------------------------------------------------------------------------
+# Step 5. Install docker requirements
+docker pull ebiokit/ultraextract
 
-echo "Please download the eBioKit virtual machine from ftp://ftpuser:KCwtk5UYBgxvU2pP@77.235.253.230/ebiokit-original.tar.gz"
-echo "and import the machine in VirtualBox"
-echo "You will need also to configure Nginx to run as a reverse proxy. Please use the provided site settings "
-echo "located at config/default/settings and place it at /etc/nginx/sites-enabled/default:"
-echo " $ sudo cp config/default/nginx-default-server /opt/local/etc/nginx/sites-enabled/default "
-echo " $ sudo service nginx restart"
-echo ""
+# --------------------------------------------------------------------------------
+# Step 6. Configure Nginx to run as a reverse proxy and restart service
+sudo brew services stop nginx
+sudo cp /usr/local/etc/nginx/nginx.conf /usr/local/etc/nginx/nginx.conf_bk
+sudo cp config/default/nginx-conf-osx /usr/local/etc/nginx/nginx.conf
+sudo cp config/default/nginx-default-server /usr/local/etc/nginx/servers/default
+sudo brew services start nginx
 
-#TODO: admin tools command line
-#TODO: nginx.conf
-#TODO: start services and go to IP/admin
-#TODO: Go to settings check if valid data dirs
-#TODO: logout and create an account, login again as ebiokit and change admin users
+# --------------------------------------------------------------------------------
+# Step 7. Launch UWSGI server
+cd /data/ebiokit-data/nginx
+mkdir /usr/local/var/log/uwsgi
+kill -9 `cat /tmp/ebiokit.pid`; sudo rm /tmp/ebiokit.*
+kill -9 `cat /tmp/ebiokit_queue.pid`; sudo rm /tmp/ebiokit_queue.*
+sudo uwsgi --ini uwsgi.ini
+sudo uwsgi --ini queue_uwsgi.ini
+# TO STOP USE sudo kill -9 `cat /tmp/ebiokit.pid`; sudo rm /tmp/ebiokit.*
+# TO STOP USE sudo kill -9 `cat /tmp/ebiokit_queue.pid`; sudo rm /tmp/ebiokit_queue.*
+
+#TODO: RUN THE QUEUE
+#TODO: CHANGE THE QUEUE FUNCTIONS LOCATION
