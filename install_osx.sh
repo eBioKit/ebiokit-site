@@ -11,7 +11,7 @@ EBIOKIT_GROUP="staff"
 # Install Homebrew package system
  /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 # Install dependencies
-brew install wget nginx uwsgi htop
+brew install wget nginx uwsgi htop md5sha1sum
 # Root for docs is: /usr/local/var/www
 # By default the port is set to 8080 at  /usr/local/etc/nginx/nginx.conf.
 # We must edit this file and change default port to 80
@@ -99,9 +99,12 @@ mkdir /usr/local/var/log/uwsgi
 kill -9 `cat /tmp/ebiokit.pid`; sudo rm /tmp/ebiokit.*
 kill -9 `cat /tmp/ebiokit_queue.pid`; sudo rm /tmp/ebiokit_queue.*
 sudo uwsgi --ini uwsgi.ini
-sudo uwsgi --ini queue_uwsgi.ini
+sudo uwsgi --ini queue_uwsgi.ini --enable-threads
 # TO STOP USE sudo kill -9 `cat /tmp/ebiokit.pid`; sudo rm /tmp/ebiokit.*
 # TO STOP USE sudo kill -9 `cat /tmp/ebiokit_queue.pid`; sudo rm /tmp/ebiokit_queue.*
 
-#TODO: RUN THE QUEUE
+# --------------------------------------------------------------------------------
+# Step 8. Link the service tools for managing the system as a OS tool
+ln -s ${EBIOKIT_WWW_DIRECTORY}/ebiokit/admin_tools/service /usr/local/bin/ebservice
+
 #TODO: CHANGE THE QUEUE FUNCTIONS LOCATION

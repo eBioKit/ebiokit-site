@@ -106,8 +106,11 @@ sudo service nginx start
 cd /data/ebiokit-data/nginx
 sudo uwsgi --ini uwsgi.ini
 # TO STOP USE sudo kill -9 `cat /tmp/ebiokit.pid`; sudo rm /tmp/ebiokit.*
-sudo uwsgi --ini queue_uwsgi.ini
+sudo uwsgi --ini queue_uwsgi.ini --enable-threads
 # TO STOP USE sudo kill -9 `cat /tmp/ebiokit_queue.pid`; sudo rm /tmp/ebiokit_queue.*
 
-#TODO: RUN THE QUEUE
 #TODO: CHANGE THE QUEUE FUNCTIONS LOCATION
+
+# --------------------------------------------------------------------------------
+# Step 8. Link the service tools for managing the system as a OS tool
+ln -s ${EBIOKIT_WWW_DIRECTORY}/ebiokit/admin_tools/service /usr/local/bin/ebservice
