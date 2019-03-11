@@ -45,7 +45,11 @@ def get_installed_services():
         connection = sqlite3.connect(DB_LOCATION)
         cursor = connection.cursor()
         cursor.execute('SELECT instance_name, title, enabled FROM applications_application')
-        INSTALLED_SERVICES = []
+        INSTALLED_SERVICES = [
+            Service().parse(["ebiokit-web", "eBioKit website", 1]),
+            Service().parse(["ebiokit-queue", "eBioKit queue", 1]),
+            Service().parse(["docker-engine", "Docker engine", 1])
+        ]
         for service_data in cursor:
             INSTALLED_SERVICES.append(Service().parse(service_data))
         cursor.close()
@@ -70,10 +74,11 @@ def printServiceMessage(message, length=30):
     sys.stdout.write(message)
     sys.stdout.flush()
 
+
 def ebiokit_remote_launcher(command, instance_name, ignore=False):
     settings = read_settings()
     data_location = get_data_location()
-    command = osPath.join(osPath.dirname(osPath.realpath(__file__)), 'ebiokit_launcher.sh') + ' "' + settings.get("platform") + '" "' + command + '" "' + instance_name + '" "' + data_location + '"'
+    command = osPath.join(osPath.dirname(osPath.realpath(__file__)), 'ebiokit_launcher.sh') + ' "' + settings.get("platform") + '" "' + command.replace(" ", "_") + '" "' + instance_name + '" "' + data_location + '"'
     error = ""
     try:
         p = subprocess.Popen(['bash', '-c', command], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -84,6 +89,7 @@ def ebiokit_remote_launcher(command, instance_name, ignore=False):
         else:
             raise ex
     return output, err
+
 
 def read_settings():
     connection = sqlite3.connect(DB_LOCATION)

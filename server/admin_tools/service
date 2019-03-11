@@ -27,4 +27,4 @@ if [ ! -e $DIR/service_tools/service.py ]; then
         DIR="$(dirname `readlink $0`)"
 fi
 
-python $DIR/service_tools/service.py $SERVICE $COMMAND $NO_CMD
+python $DIR/service_tools/service.py $@

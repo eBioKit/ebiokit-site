@@ -78,8 +78,9 @@ def check_service(service, nice_output = True):
     try:
         # Call to status for docker-compose
         output, error = ebiokit_remote_launcher("service status", service.instance_name)
-        print output
-        print >> sys.stderr, error
+        print(output.rstrip("\n"))
+        if error != "":
+            print >> sys.stderr, error.rstrip("\n")
     except Exception as ex:
         print ex.message
         print "UNKNOWN"
