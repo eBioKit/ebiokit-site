@@ -49,14 +49,13 @@ def main(options):
         import service_restart as _dispacher
     elif options[1] == "log":
         import service_log as _dispacher
-        if len(options) > 2:
-            params.append(options[2])
-        if len(options) > 3:
-            params.append(options[3])
     else: #status
-        if len(options) > 2 and options[2] == "--no-cmd":
-            params.append("--no-cmd")
         import service_status as _dispacher
+
+    if len(options) > 2:
+        params.append(options[2])
+    if len(options) > 3:
+        params.append(options[3])
 
     _dispacher.main(params)
 

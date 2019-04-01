@@ -7,122 +7,119 @@ main(){
   DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
   cd $DIR
 
-  if [[ "$PLATFORM" == "LINUX" ]]; then
-      if [[ "$COMMAND" == "service_status" ]]; then
-          SERVICE=$3
-          DATA_LOCATION=$4
+  if [[ "$COMMAND" == "service_status" ]]; then
+      SERVICE=$3
+      DATA_LOCATION=$4
 
-          if is_core_service "$SERVICE"; then
-            check_core_service "$SERVICE" "$COMMAND"
-            exit $?
-          fi
-
-          containers=()
-          ids=$(docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml ps -q);
-          for id in ${ids[*]}; do
-              containers+=($(docker inspect --format "{{.Name}};{{.State.Status}};{{.Config.Image}}" $id))
-          done
-
-          RUNNING=0
-          EXITED=0
-          OTHER=0
-          WARNING_MESSAGE=""
-
-          for container in ${containers[*]}; do
-                container=(${container//;/ });
-                containerName=${container[0]};
-                containerStatus=${container[1]};
-                containerType=${container[2]};
-
-                if [[ "$containerStatus" == "exited" ]]; then
-                      if [[ "$containerType" != "busybox" ]]; then
-                            EXITED=$((EXITED+1))
-                            WARNING_MESSAGE="${WARNING_MESSAGE}Container $containerName is not running (current status is $containerStatus),";
-                      fi
-                elif [[ "$containerStatus" == "running" ]]; then
-                      RUNNING=$((RUNNING+1))
-                else
-                      OTHER=$((OTHER+1))
-                      WARNING_MESSAGE="${WARNING_MESSAGE}Container $containerName is not running (current status is $containerStatus),";
-                fi
-          done
-
-          if [[ "$RUNNING" == 0 ]]; then
-                echo "STOPPED";
-          elif [[ "$EXITED" != 0 || "$OTHER" != 0 ]]; then
-                echo "WARNING"
-                echo ${WARNING_MESSAGE} >&2
-          else
-                echo "RUNNING";
-          fi
-
-      elif [[ "$COMMAND" == "service_stop" ]]; then
-          SERVICE=$3
-          DATA_LOCATION=$4
-
-          echo $SERVICE
-
-          if is_core_service "$SERVICE"; then
-            check_core_service "$SERVICE" "$COMMAND"
-            exit $?
-          fi
-
-          docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml stop 2>> ../../log/error.log >> ../../log/services.log
-      elif [[ "$COMMAND" == "service_start" ]]; then
-          SERVICE=$3
-          DATA_LOCATION=$4
-
-          if is_core_service "$SERVICE"; then
-            check_core_service "$SERVICE" "$COMMAND"
-            exit $?
-          fi
-
-          docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml up -d 2>> ../../log/error.log >> ../../log/services.log
-      elif [[ "$COMMAND" == "service_restart" ]]; then
-          SERVICE=$3
-          DATA_LOCATION=$4
-
-          if is_core_service "$SERVICE"; then
-            check_core_service "$SERVICE" "$COMMAND"
-            exit $?
-          fi
-
-          docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml restart -d 2>> ../../log/error.log >> ../../log/services.log
-      elif [[ "$COMMAND" == "service_log" ]]; then
-          LINES=$3
-          SERVICE=$4
-          DATA_LOCATION=$5
-
-          if is_core_service "$SERVICE"; then
-            check_core_service "$SERVICE" "$COMMAND" $LINES
-            exit $?
-          fi
-
-          docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml logs | tail -$LINES
-      elif [[ "$COMMAND" == "service_rm" ]]; then
-          SERVICE=$3
-          DATA_LOCATION=$4
-
-          if is_core_service "$SERVICE"; then
-            echo "Not a valid option. Aborting."
-            exit 1
-          fi
-
-          docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml rm -f  2>> ../../log/error.log >> ../../log/services.log
-      elif [[ "$COMMAND" == "service_rmi" ]]; then
-          SERVICE=$3
-          DATA_LOCATION=$4
-
-          if is_core_service "$SERVICE"; then
-            echo "Not a valid option. Aborting."
-            exit 1
-          fi
-
-          docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml down --rmi all 2>> ../../log/error.log >> ../../log/services.log
-      else
-          echo "Unknown option "
-          exit 1
+      if is_core_service "$SERVICE"; then
+        check_core_service "$SERVICE" "$COMMAND"
+        exit $?
       fi
+
+      containers=()
+      ids=$(docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml ps -q);
+      for id in ${ids[*]}; do
+          containers+=($(docker inspect --format "{{.Name}};{{.State.Status}};{{.Config.Image}}" $id))
+      done
+
+      RUNNING=0
+      EXITED=0
+      OTHER=0
+      WARNING_MESSAGE=""
+
+      for container in ${containers[*]}; do
+            container=(${container//;/ });
+            containerName=${container[0]};
+            containerStatus=${container[1]};
+            containerType=${container[2]};
+
+            if [[ "$containerStatus" == "exited" ]]; then
+                  if [[ "$containerType" != "busybox" ]]; then  # Ignore busybox containers usually used for data persistance
+                        EXITED=$((EXITED+1))
+                        WARNING_MESSAGE="${WARNING_MESSAGE}Container $containerName is not running (current status is $containerStatus),";
+                  fi
+            elif [[ "$containerStatus" == "running" ]]; then
+                  RUNNING=$((RUNNING+1))
+            else
+                  OTHER=$((OTHER+1))
+                  WARNING_MESSAGE="${WARNING_MESSAGE}Container $containerName is not running (current status is $containerStatus),";
+            fi
+      done
+
+      if [[ "$RUNNING" == 0 ]]; then
+            echo "STOPPED";
+      elif [[ "$EXITED" != 0 || "$OTHER" != 0 ]]; then
+            echo "WARNING"
+            echo ${WARNING_MESSAGE} >&2
+      else
+            echo "RUNNING";
+      fi
+  elif [[ "$COMMAND" == "service_stop" ]]; then
+      SERVICE=$3
+      DATA_LOCATION=$4
+
+      echo $SERVICE
+
+      if is_core_service "$SERVICE"; then
+        check_core_service "$SERVICE" "$COMMAND"
+        exit $?
+      fi
+
+      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml stop 2>> ../../log/error.log >> ../../log/services.log
+  elif [[ "$COMMAND" == "service_start" ]]; then
+      SERVICE=$3
+      DATA_LOCATION=$4
+
+      if is_core_service "$SERVICE"; then
+        check_core_service "$SERVICE" "$COMMAND"
+        exit $?
+      fi
+
+      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml up -d 2>> ../../log/error.log >> ../../log/services.log
+  elif [[ "$COMMAND" == "service_restart" ]]; then
+      SERVICE=$3
+      DATA_LOCATION=$4
+
+      if is_core_service "$SERVICE"; then
+        check_core_service "$SERVICE" "$COMMAND"
+        exit $?
+      fi
+
+      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml restart -d 2>> ../../log/error.log >> ../../log/services.log
+  elif [[ "$COMMAND" == "service_log" ]]; then
+      LINES=$3
+      SERVICE=$4
+      DATA_LOCATION=$5
+
+      if is_core_service "$SERVICE"; then
+        check_core_service "$SERVICE" "$COMMAND" $LINES
+        exit $?
+      fi
+
+      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml logs | tail -$LINES
+  elif [[ "$COMMAND" == "service_rm" ]]; then
+      SERVICE=$3
+      DATA_LOCATION=$4
+
+      if is_core_service "$SERVICE"; then
+        echo "Not a valid option. Aborting."
+        exit 1
+      fi
+
+      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml rm -f  2>> ../../log/error.log >> ../../log/services.log
+  elif [[ "$COMMAND" == "service_rmi" ]]; then
+      SERVICE=$3
+      DATA_LOCATION=$4
+
+      if is_core_service "$SERVICE"; then
+        echo "Not a valid option. Aborting."
+        exit 1
+      fi
+
+      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml down --rmi all 2>> ../../log/error.log >> ../../log/services.log
+  else
+      echo "Unknown option "
+      exit 1
   fi
 }
 
@@ -141,7 +138,13 @@ check_core_service(){
     if [[ "$COMMAND" == "service_status" ]]; then
       if [[ "$SERVICE" == "ebiokit-web" ]]; then
         # First check the status for NGINX service
-        nginx_status=$(sudo brew services list | grep nginx | cut -f2 -d" ")
+        if [[ "$PLATFORM" == "LINUX" ]]; then
+          #TODO: CHECK IN LINUX
+          echo "NOT IMPLEMENTED"
+        elif [[ "$PLATFORM" == "OSX" ]]; then
+          nginx_status=$(sudo brew services list | grep nginx | cut -f2 -d" ")
+        fi
+
         # Now check the status for Django service (UWSGI)
         if [ -f /tmp/ebiokit.pid ]; then
           ps -A | grep  `cat /tmp/ebiokit.pid` | head -1 | grep uwsgi.ini > /dev/null
@@ -188,7 +191,12 @@ check_core_service(){
       fi
     elif [[ "$COMMAND" == "service_stop" ]]; then
         if [[ "$SERVICE" == "ebiokit-web" ]]; then
-          sudo brew services stop nginx
+          if [[ "$PLATFORM" == "LINUX" ]]; then
+            #TODO: STOP IN LINUX
+            echo "NOT IMPLEMENTED"
+          elif [[ "$PLATFORM" == "OSX" ]]; then
+            sudo brew services stop nginx
+          fi
           sudo kill -9 `cat /tmp/ebiokit.pid`
           sudo rm /tmp/ebiokit.*
         elif [[ "$SERVICE" == "ebiokit-queue" ]]; then
@@ -196,12 +204,22 @@ check_core_service(){
           sudo rm /tmp/ebiokit_queue.*
         elif [[ "$SERVICE" == "docker-engine" ]]; then
           ebservice all stop
-          sudo killall Docker
+          if [[ "$PLATFORM" == "LINUX" ]]; then
+            #TODO: STOP IN LINUX
+            echo "NOT IMPLEMENTED"
+          elif [[ "$PLATFORM" == "OSX" ]]; then
+            sudo killall Docker
+          fi
         fi
     elif [[ "$COMMAND" == "service_start" ]]; then
       if [[ "$SERVICE" == "ebiokit-web" ]]; then
         ebservice $SERVICE stop
-        sudo brew services start nginx
+        if [[ "$PLATFORM" == "LINUX" ]]; then
+          #TODO: STOP IN LINUX
+          echo "NOT IMPLEMENTED"
+        elif [[ "$PLATFORM" == "OSX" ]]; then
+          sudo brew services start nginx
+        fi
         cd /data/ebiokit-data/nginx
         sudo uwsgi --ini uwsgi.ini
       elif [[ "$SERVICE" == "ebiokit-queue" ]]; then
@@ -209,18 +227,41 @@ check_core_service(){
         cd /data/ebiokit-data/nginx
         sudo uwsgi --ini queue_uwsgi.ini --enable-threads
       elif [[ "$SERVICE" == "docker-engine" ]]; then
-        open /Applications/Docker.app
+        if [[ "$PLATFORM" == "LINUX" ]]; then
+          #TODO: STOP IN LINUX
+          echo "NOT IMPLEMENTED"
+        elif [[ "$PLATFORM" == "OSX" ]]; then
+          open /Applications/Docker.app
+        fi
       fi
     elif [[ "$COMMAND" == "service_restart" ]]; then
       ebservice $SERVICE stop
       ebservice $SERVICE start
     elif [[ "$COMMAND" == "service_log" ]]; then
       if [[ "$SERVICE" == "ebiokit-web" ]]; then
-        echo "$SERVICE MEHHHHHHHH"
+        echo "Unable to show the log for the web."
+        if [[ "$PLATFORM" == "LINUX" ]]; then
+          #TODO: STOP IN LINUX
+          echo "NOT IMPLEMENTED"
+        elif [[ "$PLATFORM" == "OSX" ]]; then
+          echo "You can find the complete log for this service at /usr/local/var/log/nginx/ and at /usr/local/var/log/uwsgi/ebiokit.log"
+        fi
       elif [[ "$SERVICE" == "ebiokit-queue" ]]; then
-        echo "$SERVICE MEHHHHHHHH"
+        echo "Unable to show the log for the queue."
+        if [[ "$PLATFORM" == "LINUX" ]]; then
+          #TODO: STOP IN LINUX
+          echo "NOT IMPLEMENTED"
+        elif [[ "$PLATFORM" == "OSX" ]]; then
+          echo "You can find the complete log for this service at /usr/local/var/log/uwsgi/ebiokit_queue.log"
+        fi
       elif [[ "$SERVICE" == "docker-engine" ]]; then
-        echo "$SERVICE MEHHHHHHHH"
+        if [[ "$PLATFORM" == "LINUX" ]]; then
+          #TODO: STOP IN LINUX
+          echo "NOT IMPLEMENTED"
+        elif [[ "$PLATFORM" == "OSX" ]]; then
+          pred='process matches ".*(ocker|vpnkit).*" || (process in {"taskgated-helper", "launchservicesd", "kernel"} && eventMessage contains[c] "docker")'
+          /usr/bin/log show --debug --info --style syslog --last 1m --predicate "$pred"
+        fi
       fi
     else
       echo "Unknown option"

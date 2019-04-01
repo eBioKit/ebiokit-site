@@ -23,6 +23,9 @@ from time import sleep
 def main(options):
     read_conf()
 
+    if "-h" in options or "--help" in options:
+        show_help()
+
     if len(options) < 1 or not(options[0] in ["-a", "--all", "-s", "--service"]):
         show_help()
 

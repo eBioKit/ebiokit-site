@@ -62,6 +62,7 @@ python manage.py flush
 # Step 4.5.2 Prepare the database
 python manage.py migrate
 # Step 4.5.3 Fill the database with default values
+sed -i "" 's/LINUX/OSX/g' config/default/settings.json
 python manage.py loaddata config/default/*.json
 # Step 4.5.4 Create the superuser for database backend (only accesible if Debug enabled)
 python manage.py createsuperuser
