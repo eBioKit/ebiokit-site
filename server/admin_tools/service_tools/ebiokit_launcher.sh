@@ -139,8 +139,12 @@ check_core_service(){
       if [[ "$SERVICE" == "ebiokit-web" ]]; then
         # First check the status for NGINX service
         if [[ "$PLATFORM" == "LINUX" ]]; then
-          #TODO: CHECK IN LINUX
-          echo "NOT IMPLEMENTED"
+          sudo service nginx status > /dev/null
+          if [[ "$?" == "0" ]]; then
+            django_status="running"
+          elif [[ "$?" == "3" ]]; then
+            django_status="stopped"
+          fi
         elif [[ "$PLATFORM" == "OSX" ]]; then
           nginx_status=$(sudo brew services list | grep nginx | cut -f2 -d" ")
         fi
@@ -192,8 +196,7 @@ check_core_service(){
     elif [[ "$COMMAND" == "service_stop" ]]; then
         if [[ "$SERVICE" == "ebiokit-web" ]]; then
           if [[ "$PLATFORM" == "LINUX" ]]; then
-            #TODO: STOP IN LINUX
-            echo "NOT IMPLEMENTED"
+            sudo service nginx stop
           elif [[ "$PLATFORM" == "OSX" ]]; then
             sudo brew services stop nginx
           fi
@@ -205,8 +208,7 @@ check_core_service(){
         elif [[ "$SERVICE" == "docker-engine" ]]; then
           ebservice all stop
           if [[ "$PLATFORM" == "LINUX" ]]; then
-            #TODO: STOP IN LINUX
-            echo "NOT IMPLEMENTED"
+            sudo service docker stop
           elif [[ "$PLATFORM" == "OSX" ]]; then
             sudo killall Docker
           fi
@@ -215,8 +217,7 @@ check_core_service(){
       if [[ "$SERVICE" == "ebiokit-web" ]]; then
         ebservice $SERVICE stop
         if [[ "$PLATFORM" == "LINUX" ]]; then
-          #TODO: STOP IN LINUX
-          echo "NOT IMPLEMENTED"
+          sudo service nginx start
         elif [[ "$PLATFORM" == "OSX" ]]; then
           sudo brew services start nginx
         fi
@@ -228,8 +229,7 @@ check_core_service(){
         sudo uwsgi --ini queue_uwsgi.ini --enable-threads
       elif [[ "$SERVICE" == "docker-engine" ]]; then
         if [[ "$PLATFORM" == "LINUX" ]]; then
-          #TODO: STOP IN LINUX
-          echo "NOT IMPLEMENTED"
+          sudo service docker start
         elif [[ "$PLATFORM" == "OSX" ]]; then
           open /Applications/Docker.app
         fi
@@ -241,26 +241,23 @@ check_core_service(){
       if [[ "$SERVICE" == "ebiokit-web" ]]; then
         echo "Unable to show the log for the web."
         if [[ "$PLATFORM" == "LINUX" ]]; then
-          #TODO: STOP IN LINUX
-          echo "NOT IMPLEMENTED"
+          echo "You can find the complete log for this service at /var/log/nginx/ and at /var/log/uwsgi/ebiokit.log"
         elif [[ "$PLATFORM" == "OSX" ]]; then
           echo "You can find the complete log for this service at /usr/local/var/log/nginx/ and at /usr/local/var/log/uwsgi/ebiokit.log"
         fi
       elif [[ "$SERVICE" == "ebiokit-queue" ]]; then
         echo "Unable to show the log for the queue."
         if [[ "$PLATFORM" == "LINUX" ]]; then
-          #TODO: STOP IN LINUX
-          echo "NOT IMPLEMENTED"
+          echo "You can find the complete log for this service at /var/log/uwsgi/ebiokit_queue.log"
         elif [[ "$PLATFORM" == "OSX" ]]; then
           echo "You can find the complete log for this service at /usr/local/var/log/uwsgi/ebiokit_queue.log"
         fi
       elif [[ "$SERVICE" == "docker-engine" ]]; then
         if [[ "$PLATFORM" == "LINUX" ]]; then
-          #TODO: STOP IN LINUX
-          echo "NOT IMPLEMENTED"
+          echo "You can find the complete log for this service executing 'journalctl -u docker.service'"
         elif [[ "$PLATFORM" == "OSX" ]]; then
-          pred='process matches ".*(ocker|vpnkit).*" || (process in {"taskgated-helper", "launchservicesd", "kernel"} && eventMessage contains[c] "docker")'
-          /usr/bin/log show --debug --info --style syslog --last 1m --predicate "$pred"
+          echo "You can find the complete log for this service executing the following commands:"
+          echo "pred='process matches \".*(ocker|vpnkit).*\" || (process in {\"taskgated-helper\", \"launchservicesd\", \"kernel\"} && eventMessage contains[c] \"docker\")' && /usr/bin/log stream --style syslog --level=debug --color=always --predicate \"\$pred\""
         fi
       fi
     else
