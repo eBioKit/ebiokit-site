@@ -17,7 +17,8 @@ main(){
       fi
 
       containers=()
-      ids=$(docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml ps -q);
+      cd ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}
+      ids=$(docker-compose ps -q);
       for id in ${ids[*]}; do
           containers+=($(docker inspect --format "{{.Name}};{{.State.Status}};{{.Config.Image}}" $id))
       done
@@ -64,8 +65,8 @@ main(){
         check_core_service "$SERVICE" "$COMMAND"
         exit $?
       fi
-
-      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml stop 2>> ../../log/error.log >> ../../log/services.log
+      cd ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}
+      docker-compose stop 2>> ${DATA_LOCATION}/ebiokit-logs/error.log >> ${DATA_LOCATION}/ebiokit-logs/services.log
   elif [[ "$COMMAND" == "service_start" ]]; then
       SERVICE=$3
       DATA_LOCATION=$4
@@ -74,8 +75,8 @@ main(){
         check_core_service "$SERVICE" "$COMMAND"
         exit $?
       fi
-
-      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml up -d 2>> ../../log/error.log >> ../../log/services.log
+      cd ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}
+      docker-compose up -d 2>> ${DATA_LOCATION}/ebiokit-logs/error.log >> ${DATA_LOCATION}/ebiokit-logs/services.log
   elif [[ "$COMMAND" == "service_restart" ]]; then
       SERVICE=$3
       DATA_LOCATION=$4
@@ -85,7 +86,8 @@ main(){
         exit $?
       fi
 
-      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml restart -d 2>> ../../log/error.log >> ../../log/services.log
+      cd ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}
+      docker-compose restart -d 2>> ${DATA_LOCATION}/ebiokit-logs/error.log >> ${DATA_LOCATION}/ebiokit-logs/services.log
   elif [[ "$COMMAND" == "service_log" ]]; then
       LINES=$3
       SERVICE=$4
@@ -95,8 +97,8 @@ main(){
         check_core_service "$SERVICE" "$COMMAND" $LINES
         exit $?
       fi
-
-      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml logs | tail -$LINES
+      cd ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}
+      docker-compose logs | tail -$LINES
   elif [[ "$COMMAND" == "service_rm" ]]; then
       SERVICE=$3
       DATA_LOCATION=$4
@@ -106,7 +108,8 @@ main(){
         exit 1
       fi
 
-      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml rm -f  2>> ../../log/error.log >> ../../log/services.log
+      cd ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}
+      docker-compose rm -f  2>> ${DATA_LOCATION}/ebiokit-logs/error.log >> ${DATA_LOCATION}/ebiokit-logs/services.log
   elif [[ "$COMMAND" == "service_rmi" ]]; then
       SERVICE=$3
       DATA_LOCATION=$4
@@ -116,7 +119,8 @@ main(){
         exit 1
       fi
 
-      docker-compose -f ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}/docker-compose.yml down --rmi all 2>> ../../log/error.log >> ../../log/services.log
+      cd ${DATA_LOCATION}/ebiokit-services/launchers/${SERVICE}
+      docker-compose down --rmi all 2>> ${DATA_LOCATION}/ebiokit-logs/error.log >> ${DATA_LOCATION}/ebiokit-logs/services.log
   else
       echo "Unknown option "
       exit 1
