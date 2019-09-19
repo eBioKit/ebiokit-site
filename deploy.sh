@@ -2,11 +2,12 @@
 
 echo "Please type the new version number."
 echo "Check latest version here: https://github.com/eBioKit/ebiokit-site/releases"
-read -p "New version (e.g. 18.08):" VERSION
+version=$(date +"%y.%m")
+read -p "New version (e.g. ${version}):" VERSION
 
 if [[ "$VERSION" == "" ]]; then
-  echo "Version number not valid."
-  exit 1
+  echo "Version number not specified. Using ${version}"
+  VERSION=${version}
 fi
 
 OLD_PWD=$(pwd)
