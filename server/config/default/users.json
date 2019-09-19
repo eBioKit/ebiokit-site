@@ -1,1 +1,10 @@
-[{"model": "applications.user", "pk": 1, "fields": {"name": "ebiokit", "email": "ebiokit@gmail.com", "password": "123123", "role": "admin"}}]
+[{
+  "model": "applications.user",
+  "pk": 1,
+  "fields": {
+    "name": "ebiokit",
+    "email": "ebiokit@gmail.com",
+    "password": "123123",
+    "role": "admin"
+  }
+}]

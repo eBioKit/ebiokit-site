@@ -961,7 +961,6 @@
 
     this.retrieveJobsListData = function(force, callback_caller, callback_function) {
       $scope.isLoading = true;
-
       if (JobList.getOld() > 1 || force) { //Max age for data 5min.
         $http($rootScope.getHttpRequestConfig("GET", "job-list", {})).
         then(

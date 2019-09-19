@@ -161,6 +161,7 @@ def register_service_handler(task_id, instance_name=None, settings=None):
 
         log(working_dir, "register_service_handler - Add service to database...", task_id)
         # Load DJANGO environment to access databases
+        # TODO: USE DATABASE DIRECTLY AND REMOVE DEPENDECY FOR DJANGO
         sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
         django.setup()
@@ -190,21 +191,23 @@ def register_service_handler(task_id, instance_name=None, settings=None):
         service.save()
 
         settings["INSTANCE_DOCKERS"] = data.get("dockers").replace(",", "#")
+        settings["DATA_LOCATION"] = os.path.join(settings.get("ebiokit_data_location"), "ebiokit-data")
 
         # Now adapt the settings for the proxy rules and copy them to the correspoding directory
         log(working_dir, "register_service_handler - Registering service in proxy", task_id)
-        copy_and_replace(working_dir + "/service_conf/proxy.upstream", settings.get("nginx_data_location") + instance_name + ".upstream", settings)
-        copy_and_replace(working_dir + "/service_conf/proxy.conf", settings.get("nginx_data_location") + instance_name + ".conf", settings)
+        copy_and_replace(working_dir + "/service_conf/proxy.upstream", settings.get("nginx_data_location") + instance_name + ".upstream", replacements=settings)
+        copy_and_replace(working_dir + "/service_conf/proxy.conf", settings.get("nginx_data_location") + instance_name + ".conf", replacements=settings)
 
         # Now copy the launcher file (docker-compose) to auto-launch the service on boot
         log(working_dir, "register_service_handler - Add launcher file", task_id)
         command = "mkdir -p " + settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name
         output = subprocess.check_output(['bash', '-c', command])
-        copy_and_replace(working_dir + "/service_conf/service.launcher", settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name + "/docker-compose.yml", settings)
+        copy_and_replace(working_dir + "/service_conf/service.launcher", settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name + "/docker-compose.yml", replacements=settings)
+        create_env_file(settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name, settings)
 
         # Save the auto-remove instructions
         log(working_dir, "register_service_handler - Add uninstall instructions", task_id)
-        copy_and_replace(working_dir + "/service_conf/uninstall.json", settings.get("ebiokit_data_location") + "ebiokit-services/uninstallers/" + instance_name + ".json", settings)
+        copy_and_replace(working_dir + "/service_conf/uninstall.json", settings.get("ebiokit_data_location") + "ebiokit-services/uninstallers/" + instance_name + ".json", replacements=settings)
 
         return True
     except Exception as e:
@@ -318,6 +321,7 @@ def remove_service_data_handler(task_id, instance_name=None, dockers="", setting
         if os.path.isfile(settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name + "/docker-compose.yml"):
             log(working_dir, "remove_service_data_handler - Delete the launcher file...", task_id)
             os.remove(settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name + "/docker-compose.yml")
+            os.remove(settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name + "/.env")
             os.rmdir(settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name)
         #REMOVE THE UNINSTALLER
         if os.path.isfile(settings.get("ebiokit_data_location") + "ebiokit-services/uninstallers/" + instance_name + ".json"):
@@ -342,14 +346,32 @@ def get_job_directory(tmp_dir, task_id, settings=None):
     return wd
 
 
-def copy_and_replace(source_file, target_file, replacements):
+def copy_and_replace(source_file, target_file, replacements=None):
+    """
+    This function copies the source file to the given target destination
+    and then replaces the content for the target file using the provided
+    list of replacements (replacements must be surrounded by "$${the_value_to_replace}")
+    """
     source_file = open(source_file, 'r')
     target_file = open(target_file, 'w')
-    for line in source_file:
-        for key, value in replacements.iteritems():
-            line = line.replace("$${" + key + "}", str(value))
-        target_file.write(line)
+    if replacements is not None:
+        for line in source_file:
+            for key, value in replacements.iteritems():
+                line = line.replace("$${" + key + "}", str(value))
+            target_file.write(line)
+    else:
+        target_file.write(source_file.read())
     source_file.close()
+    target_file.close()
+
+
+def create_env_file(target_dir, data):
+    """
+    This function creates the .env file with the settings for the docker-compose
+    """
+    target_file = open(os.path.join(target_dir, ".env"), 'w')
+    for key, value in data.iteritems():
+        target_file.write(key + "=" + str(value) + "\n")
     target_file.close()
 
 

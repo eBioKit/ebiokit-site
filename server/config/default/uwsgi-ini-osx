@@ -10,20 +10,20 @@ plugins = python
 # process-related settings
 pidfile=/tmp/ebiokit.pid
 uid = ebiokit
-gid = ebiokit
+gid = staff
 # master
-master          = true
+master = true
 # maximum number of worker processes
-processes       = 10
+processes = 10
 # the socket (use the full path to be safe
-socket          = /tmp/ebiokit.sock
+socket = /tmp/ebiokit.sock
 # with appropriate permissions - may be needed
-chmod-socket    = 666
+chmod-socket = 666
 # clear environment on exit
-vacuum          = true
+vacuum = true
 # WARNING: respawn processes taking more than 60 seconds
 harakiri = 60
 # respawn processes after serving 5000 requests
 max-requests = 5000
 # background the process & log
-daemonize = /var/log/uwsgi/ebiokit.log
+daemonize = /usr/local/var/log/uwsgi/ebiokit.log

@@ -39,7 +39,7 @@
 	]);
 
 	app.constant('myAppConfig', {
-		VERSION: '0.1',
+		VERSION: '18.10',
 		SERVER_URL : "/"
 	});
 

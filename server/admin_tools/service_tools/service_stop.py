@@ -22,6 +22,9 @@ from common import *
 def main(options):
     read_conf()
 
+    if "-h" in options or "--help" in options:
+        show_help()
+
     if len(options) < 1 or not(options[0] in ["-a", "--all", "-s", "--service"]):
         show_help()
 
@@ -40,7 +43,10 @@ def main(options):
         if target_services == None:
             show_help("Service \"" + options[1] + "\" is not installed.")
     else:
-        target_services = INSTALLED_SERVICES
+        target_services = []
+        for service in INSTALLED_SERVICES:
+            if service.instance_name != "docker-engine":
+                target_services.append(service)
 
     # STEP 2. STOP ALL SELECTED SERVICES
     for service in target_services:

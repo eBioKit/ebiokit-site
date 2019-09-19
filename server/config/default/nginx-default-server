@@ -40,7 +40,7 @@ server {
 		alias     /var/www/ebiokit/static/;
 	}
 
-  include /data/ebiokit-data/nginx/sites-enabled/conf/*.conf;
+	include /data/ebiokit-data/nginx/sites-enabled/conf/*.conf;
 
 	location / {
 		uwsgi_pass  django;

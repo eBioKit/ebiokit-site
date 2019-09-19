@@ -48,14 +48,14 @@ def main(options):
     elif options[1] == "restart":
         import service_restart as _dispacher
     elif options[1] == "log":
-        if len(options) > 2:
-            params.append("--lines")
-            params.append(str(options[2]).replace("-",""))
         import service_log as _dispacher
     else: #status
-        if len(options) > 2 and options[2] == "--no-cmd":
-            params.append("--no-cmd")
         import service_status as _dispacher
+
+    if len(options) > 2:
+        params.append(options[2])
+    if len(options) > 3:
+        params.append(options[3])
 
     _dispacher.main(params)
 
@@ -69,7 +69,7 @@ def show_help(message=""):
     for service in INSTALLED_SERVICES:
         services.append(service.instance_name)
 
-    print "Usage: service [SERVICE NAME] [OPTION]"
+    print "Usage: ebservice [SERVICE NAME] [OPTION]"
     print "where SERVICE NAME includes:"
     print "   all               if you want to run OPTION for all eBioKit Services."
     print "   service_name      if you want to run OPTION for a selected eBioKit service."

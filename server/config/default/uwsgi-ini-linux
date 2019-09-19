@@ -1,0 +1,29 @@
+[uwsgi]
+# Django-related settings
+# the base directory (full path)
+chdir = /var/www/ebiokit
+#static-map = /static=./static
+# Django's wsgi file
+wsgi-file = config/wsgi.py
+# Enable the uwsgi-plugin-python
+plugins = python
+# process-related settings
+pidfile=/tmp/ebiokit.pid
+uid = ebiokit
+gid = ebiokit
+# master
+master = true
+# maximum number of worker processes
+processes = 10
+# the socket (use the full path to be safe
+socket = /tmp/ebiokit.sock
+# with appropriate permissions - may be needed
+chmod-socket = 666
+# clear environment on exit
+vacuum = true
+# WARNING: respawn processes taking more than 60 seconds
+harakiri = 60
+# respawn processes after serving 5000 requests
+max-requests = 5000
+# background the process & log
+daemonize = /var/log/uwsgi/ebiokit.log
