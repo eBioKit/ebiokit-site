@@ -96,7 +96,7 @@ sudo brew services start nginx
 # --------------------------------------------------------------------------------
 # Step 7. Launch UWSGI server
 cd /data/ebiokit-data/nginx
-mkdir /usr/local/var/log/uwsgi
+mkdir -p /usr/local/var/log/uwsgi
 kill -9 `cat /tmp/ebiokit.pid`; sudo rm /tmp/ebiokit.*
 kill -9 `cat /tmp/ebiokit_queue.pid`; sudo rm /tmp/ebiokit_queue.*
 sudo uwsgi --ini uwsgi.ini
