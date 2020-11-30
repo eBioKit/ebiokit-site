@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 """
-(C) Copyright 2017 SLU Global Bioinformatics Centre, SLU
+(C) Copyright 2021 SLU Global Bioinformatics Centre, SLU
 (http://sgbc.slu.se) and the eBioKit Project (http://ebiokit.eu).
 
-This file is part of The eBioKit portal 2017. All rights reserved.
+This file is part of The eBioKit portal 2021. All rights reserved.
 The eBioKit portal is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation, either version 3 of

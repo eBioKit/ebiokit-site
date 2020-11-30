@@ -1,8 +1,8 @@
 """
-(C) Copyright 2017 SLU Global Bioinformatics Centre, SLU
+(C) Copyright 2021 SLU Global Bioinformatics Centre, SLU
 (http://sgbc.slu.se) and the eBioKit Project (http://ebiokit.eu).
 
-This file is part of The eBioKit portal 2017. All rights reserved.
+This file is part of The eBioKit portal 2021. All rights reserved.
 The eBioKit portal is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation, either version 3 of
@@ -26,33 +26,33 @@ Contributors:
 """
 
 import datetime
-
-import json
+import logging
 import requests
+import json
+
 from django.http import JsonResponse
 from rest_framework import renderers
 from rest_framework import viewsets
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 
-import install_services_functions
-from models import Application, RemoteServer, Job, Task, Settings
-from resources.UserSessionManager import UserSessionManager
-# from resources.pysiq_api import enqueue, check_status, get_result
-import resources.pysiq_api as pysiq
-from serializers import JobSerializer
-from os import path as osPath
-import subprocess
+from .models import Application, RemoteServer, Job, Task, Settings
+from .resources.UserSessionManager import UserSessionManager
+from .resources.pysiq_api import enqueue as pysiq_enqueue, get_result as  pysiq_get_result, check_status as  pysiq_check_status
+from .install_services_functions import clean_data_handler
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
 
 class JobViewSet(viewsets.ModelViewSet):
-    """ ViewSet for viewing and editing Application objects """
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
-    lookup_field = "id"
+    """ This file contains all the functions for managing the API requests related with Jobs """
 
-    #---------------------------------------------------------------
-    #- MANIPULATE INSTALLED SERVICES
-    #---------------------------------------------------------------
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    # ----------------------------------------------------------------------------------------------
+    #    _  _    _    _  _  ___   _     ___  ___  ___
+    #   | || |  /_\  | \| ||   \ | |   | __|| _ \/ __|
+    #   | __ | / _ \ | .` || |) || |__ | _| |   /\__ \
+    #   |_||_|/_/ \_\|_|\_||___/ |____||___||_|_\|___/
+    # --------------------------------------------------------------------------------------------
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def prepare_install(self, request, instance_name=None):
         """
         This function retrieves from the centralhub the installation settings for a given service (i.e. the content for
@@ -80,7 +80,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
         return JsonResponse({'success': True, 'settings' : r.json().get("settings"), "invalid_options" : invalid_options})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def prepare_upgrade(self, request, instance_name=None):
         """
         This function retrieves from the centralhub the upgrading settings for a given service (i.e. the content for
@@ -126,7 +126,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
         return JsonResponse({'success': True, 'settings' : settings, "invalid_options" : invalid_options})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def install(self, request, instance_name=None):
         # -------------------------------------------------------------------------------------------------------------
         # Step 0. First we validate that user is a valid ADMIN user and read the params from request
@@ -178,7 +178,7 @@ class JobViewSet(viewsets.ModelViewSet):
         try:
             for task in tasks:
                 if task.command != "":
-                    pysiq.enqueue(
+                    pysiq_enqueue(
                         fn="functionWrapper",
                         args=(task.name + '(' + task.id + ')', task.command),
                         task_id=task.id,
@@ -188,7 +188,7 @@ class JobViewSet(viewsets.ModelViewSet):
                         port=settings["queue_port"]
                     )
                 else:
-                    pysiq.enqueue(
+                    pysiq_enqueue(
                         fn=task.function,
                         args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
                         task_id=task.id,
@@ -202,7 +202,7 @@ class JobViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return JsonResponse({'success': False, 'job_id': job.id, 'error_message': "Unreachable queue"})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def upgrade(self, request, instance_name=None):
         # -------------------------------------------------------------------------------------------------------------
         # Step 0. First we validate that user is a valid ADMIN user and read the params from request
@@ -310,7 +310,7 @@ class JobViewSet(viewsets.ModelViewSet):
         try:
             for task in tasks:
                 if task.command != "":
-                    pysiq.enqueue(
+                    pysiq_enqueue(
                         fn="functionWrapper",
                         args=(task.name + '(' + task.id + ')', task.command),
                         task_id=task.id,
@@ -320,7 +320,7 @@ class JobViewSet(viewsets.ModelViewSet):
                         port=settings["queue_port"]
                     )
                 else:
-                    pysiq.enqueue(
+                    pysiq_enqueue(
                         fn=task.function,
                         args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
                         task_id=task.id,
@@ -334,7 +334,7 @@ class JobViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return JsonResponse({'success': False, 'job_id': job.id, 'error_message': "Unreachable queue"})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def uninstall(self, request, instance_name=None):
         # First we validate that user is a valid ADMIN user
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
@@ -378,7 +378,7 @@ class JobViewSet(viewsets.ModelViewSet):
         try:
             for task in tasks:
                 if task.command != "":
-                    pysiq.enqueue(
+                    pysiq_enqueue(
                         fn="functionWrapper",
                         args=(task.name + '(' + task.id + ')', task.command),
                         task_id=task.id,
@@ -388,7 +388,7 @@ class JobViewSet(viewsets.ModelViewSet):
                         port=settings["queue_port"]
                     )
                 else:
-                    pysiq.enqueue(
+                    pysiq_enqueue(
                         fn=task.function,
                         args=[task.id] + (task.params.split(",") if task.params != "" else []) + [settings],
                         task_id=task.id,
@@ -401,7 +401,7 @@ class JobViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return JsonResponse({'success': False, 'job_id': job.id, 'error_message': "Unreachable queue"})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def check_job_status(self, request, id=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -417,8 +417,8 @@ class JobViewSet(viewsets.ModelViewSet):
                 if task.status != 'FINISHED' and task.status != 'FAILED':
                     not_finished += 1
                     try:
-                        _status = pysiq.check_status(task.id)
-                        # _result = pysiq.get_result(task.id, remove=False)
+                        _status = pysiq_check_status(task.id)
+                        # _result = pysiq_get_result(task.id, remove=False)
                     except Exception as ex:
                         failed = True
                     #TODO: EVALUATE RESULT?
@@ -447,7 +447,7 @@ class JobViewSet(viewsets.ModelViewSet):
             try:
                 if not_finished == 0:
                     for task in tasks:
-                        pysiq.get_result(task.id, remove=True)
+                        pysiq_get_result(task.id, remove=True)
             except Exception as e:
                 failed = True
 
@@ -460,7 +460,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
         return JsonResponse({'success': not failed, 'jobs' : jobs_list, 'error_message' : "Unreachable queue" if failed else ""})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def get_job_log(self, request, id=None):
         settings = self.read_settings(request)
         job_id = id.split("_")[0]
@@ -475,7 +475,7 @@ class JobViewSet(viewsets.ModelViewSet):
             content="Log file not found."
         return JsonResponse({'success': True, 'log' : content})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def delete_job(self, request, id=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -483,14 +483,14 @@ class JobViewSet(viewsets.ModelViewSet):
         if job_instance != None:
             tasks = Task.objects.filter(job_id=job_instance.id)
             for task in tasks:
-                pysiq.get_result(task.id, remove=True)
+                pysiq_get_result(task.id, remove=True)
                 # pysiq.remove_task(task.id)
                 task.delete()
             job_instance.delete()
 
             settings = self.read_settings(request)
 
-            install_services_functions.clean_data_handler(id, settings, full=True)
+            clean_data_handler(id, settings, full=True)
             return JsonResponse({'success': True})
 
     #---------------------------------------------------------------

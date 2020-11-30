@@ -1,8 +1,8 @@
 """
-(C) Copyright 2017 SLU Global Bioinformatics Centre, SLU
+(C) Copyright 2021 SLU Global Bioinformatics Centre, SLU
 (http://sgbc.slu.se) and the eBioKit Project (http://ebiokit.eu).
 
-This file is part of The eBioKit portal 2017. All rights reserved.
+This file is part of The eBioKit portal 2021. All rights reserved.
 The eBioKit portal is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation, either version 3 of
@@ -13,8 +13,8 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 Lesser General Public License for more details.
 
- You should have received a copy of the GNU General Public License
- along with eBioKit portal.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with eBioKit portal.  If not, see <http://www.gnu.org/licenses/>.
 
 Contributors:
     Dr. Erik Bongcam-Rudloff
@@ -26,15 +26,32 @@ Contributors:
 """
 
 from django.conf.urls import url
-from application_views import ApplicationViewSet
-from job_views import JobViewSet
-from user_views import UserViewSet
 from rest_framework import renderers
 
+from .application_views import ApplicationViewSet
+from .job_views import JobViewSet
+from .user_views import UserViewSet
+
+
+# --------------------------------------------------------
+# URLs FOR SYSTEM STATUS
+# --------------------------------------------------------
 system_info = ApplicationViewSet.as_view({
     'get': 'system_info'
 }, renderer_classes=[renderers.JSONRenderer])
 
+system_version = ApplicationViewSet.as_view({
+    'get': 'system_version'
+}, renderer_classes=[renderers.JSONRenderer])
+
+system_settings = ApplicationViewSet.as_view({
+    'get': 'get_settings',
+    'post': 'update_app_settings'
+}, renderer_classes=[renderers.JSONRenderer])
+
+# --------------------------------------------------------
+# URLs FOR APPLICATIONS MANAGEMENT
+# --------------------------------------------------------
 available_updates = ApplicationViewSet.as_view({
     'get': 'available_updates'
 }, renderer_classes=[renderers.JSONRenderer])
@@ -43,34 +60,13 @@ available_applications = ApplicationViewSet.as_view({
     'get': 'available_applications'
 }, renderer_classes=[renderers.JSONRenderer])
 
-system_version = ApplicationViewSet.as_view({
-    'get': 'system_version'
-}, renderer_classes=[renderers.JSONRenderer])
-
-version = ApplicationViewSet.as_view({
-    'get': 'get_app_version'
-}, renderer_classes=[renderers.JSONRenderer])
-
-system_settings = ApplicationViewSet.as_view({
-    'get': 'get_settings',
-    'post': 'update_app_settings'
-}, renderer_classes=[renderers.JSONRenderer])
+# version = ApplicationViewSet.as_view({
+#     'get': 'get_app_version'
+# }, renderer_classes=[renderers.JSONRenderer])
 
 application_list = ApplicationViewSet.as_view({
     'get': 'list',
     'post': 'create'
-})
-
-users = UserViewSet.as_view({
-    'get': 'get_user',
-    'post': 'create_user',
-    'update': 'update_user'
-})
-
-sessions = UserViewSet.as_view({
-    'get': 'validate_session',
-    'post': 'sign_in',
-    'delete': 'sign_out'
 })
 
 application_status = ApplicationViewSet.as_view({
@@ -97,6 +93,31 @@ application_disable = ApplicationViewSet.as_view({
     'get': 'disable'
 }, renderer_classes=[renderers.JSONRenderer])
 
+application_detail = ApplicationViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'patch': 'partial_update',
+    'delete': 'destroy'
+})
+
+# --------------------------------------------------------
+# URLs FOR USERS
+# --------------------------------------------------------
+users = UserViewSet.as_view({
+    'get': 'get_user',
+    'post': 'create_user',
+    'update': 'update_user'
+})
+
+sessions = UserViewSet.as_view({
+    'get': 'validate_session',
+    'post': 'sign_in',
+    'delete': 'sign_out'
+})
+
+# --------------------------------------------------------
+# URLs FOR JOBS
+# --------------------------------------------------------
 application_prepare_install = JobViewSet.as_view({
     'get': 'prepare_install'
 }, renderer_classes=[renderers.JSONRenderer])
@@ -126,22 +147,19 @@ application_jobs_log = JobViewSet.as_view({
     'get': 'get_job_log'
 }, renderer_classes=[renderers.JSONRenderer])
 
-application_detail = ApplicationViewSet.as_view({
-    'get': 'retrieve',
-    'put': 'update',
-    'patch': 'partial_update',
-    'delete': 'destroy'
-})
 
 urlpatterns = [
+    # --------------------------------------------------------
+    # URLs FOR SYSTEM STATUS
+    # --------------------------------------------------------
     url(r'^system-info/$', system_info, name='system-info'),
-    url(r'^user/$', users, name='users'),
-    url(r'^session/$', sessions, name='sessions'),
+    url(r'^system-version/$', system_version, name='system-version'),
+    url(r'^system-settings/$', system_settings, name='system-settings'),
+    # --------------------------------------------------------
+    # URLs FOR APPLICATIONS MANAGEMENT
+    # --------------------------------------------------------
     url(r'^available-updates/$', available_updates, name='available-updates'),
     url(r'^available-applications/$', available_applications, name='available-applications'),
-    url(r'^system-version/$', system_version, name='system-version'),
-    url(r'^version/$', version, name='version'),
-    url(r'^system-settings/$', system_settings, name='system-settings'),
     url(r'^$', application_list, name='application-list'),
     url(r'^(?P<instance_name>.+)/status/$', application_status, name='application-status'),
     url(r'^(?P<instance_name>.+)/start/$', application_start, name='application-start'),
@@ -149,6 +167,16 @@ urlpatterns = [
     url(r'^(?P<instance_name>.+)/restart/$', application_restart, name='application-restart'),
     url(r'^(?P<instance_name>.+)/enable/$', application_enable, name='application-enable'),
     url(r'^(?P<instance_name>.+)/disable/$', application_disable, name='application-disable'),
+    url(r'^(?P<instance_name>.+)/$', application_detail, name='application-detail'),
+    # --------------------------------------------------------
+    # URLs FOR USERS
+    # --------------------------------------------------------
+    url(r'^user/$', users, name='users'),
+    url(r'^session/$', sessions, name='sessions'),
+    # url(r'^version/$', version, name='version'),
+    # --------------------------------------------------------
+    # URLs FOR JOBS
+    # --------------------------------------------------------
     url(r'^(?P<instance_name>.+)/prepare-install/$', application_prepare_install, name='application-prepare-install'),
     url(r'^(?P<instance_name>.+)/prepare-upgrade/$', application_prepare_upgrade, name='application-prepare-upgrade'),
     url(r'^(?P<instance_name>.+)/install/$', application_install, name='application-install'),
@@ -156,5 +184,4 @@ urlpatterns = [
     url(r'^(?P<instance_name>.+)/uninstall/$', application_uninstall, name='application-uninstall'),
     url(r'^jobs/(?P<id>.*)$', application_jobs, name='application-jobs'),
     url(r'^task/log/(?P<id>.*)/$', application_jobs_log, name='application-jobs-log'),
-    url(r'^(?P<instance_name>.+)/$', application_detail, name='application-detail'),
 ]

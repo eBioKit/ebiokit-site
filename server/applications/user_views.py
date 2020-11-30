@@ -1,8 +1,8 @@
 """
-(C) Copyright 2017 SLU Global Bioinformatics Centre, SLU
+(C) Copyright 2021 SLU Global Bioinformatics Centre, SLU
 (http://sgbc.slu.se) and the eBioKit Project (http://ebiokit.eu).
 
-This file is part of The eBioKit portal 2017. All rights reserved.
+This file is part of The eBioKit portal 2021. All rights reserved.
 The eBioKit portal is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation, either version 3 of
@@ -24,30 +24,34 @@ Contributors:
  More info http://ebiokit.eu/
  Technical contact ebiokit@gmail.com
 """
+import logging
 
-from rest_framework import viewsets
-from models import User
-from serializers import UserSerializer
 from django.http import JsonResponse
-from rest_framework.decorators import detail_route
-from rest_framework import renderers
+from rest_framework import viewsets, renderers
+from rest_framework.decorators import action
 
-from resources.UserSessionManager import UserSessionManager
+from .models import User
+from .resources.UserSessionManager import UserSessionManager
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
 
 class UserViewSet(viewsets.ModelViewSet):
-    """ ViewSet for viewing and editing Application objects """
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    lookup_field = "id"
+    """ This file contains all the functions for managing the API requests related with users """
 
-    #---------------------------------------------------------------
-    #- MANIPULATE INSTALLED SERVICES
-    #---------------------------------------------------------------
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    # ----------------------------------------------------------------------------------------------
+    #    _  _    _    _  _  ___   _     ___  ___  ___
+    #   | || |  /_\  | \| ||   \ | |   | __|| _ \/ __|
+    #   | __ | / _ \ | .` || |) || |__ | _| |   /\__ \
+    #   |_||_|/_/ \_\|_|\_||___/ |____||___||_|_\|___/
+    # --------------------------------------------------------------------------------------------
+
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def get_user(self, request):
         return JsonResponse({'success': False, 'error_message': 'Not implemented"'})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def create_user(self, request):
         try:
             user = User()
@@ -60,11 +64,11 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception as ex:
             return JsonResponse({'success': False, 'other': {'error_message': ex.message}})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def update_user(self, request):
         return JsonResponse({'success': False, 'error_message': 'Not implemented"'})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def validate_session(self, request):
         try:
             # STEP 0. CHECK IF USER IS VALID
@@ -73,7 +77,7 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception as ex:
             return JsonResponse({'success': False, 'other': {'error_message': ex.message}})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def sign_in(self, request):
         import base64
         info = base64.b64decode(request.data.get("token"))
@@ -88,7 +92,7 @@ class UserViewSet(viewsets.ModelViewSet):
             response.status_code = 500
             return response
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def sign_out(self, request):
         try:
             # STEP 0. CHECK IF USER IS VALID

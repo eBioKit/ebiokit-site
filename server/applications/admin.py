@@ -1,8 +1,8 @@
 """
-(C) Copyright 2017 SLU Global Bioinformatics Centre, SLU
+(C) Copyright 2021 SLU Global Bioinformatics Centre, SLU
 (http://sgbc.slu.se) and the eBioKit Project (http://ebiokit.eu).
 
-This file is part of The eBioKit portal 2017. All rights reserved.
+This file is part of The eBioKit portal 2021. All rights reserved.
 The eBioKit portal is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation, either version 3 of
@@ -25,13 +25,17 @@ Contributors:
  Technical contact ebiokit@gmail.com
 """
 
+import importlib, inspect
+
 from django.contrib import admin
 
-from .models import Application, RemoteServer, Job, Task, Settings, User
+from .models import *
 
-admin.site.register(Application)
-admin.site.register(RemoteServer)
-admin.site.register(Job)
-admin.site.register(Task)
-admin.site.register(Settings)
-admin.site.register(User)
+for name, cls in inspect.getmembers(importlib.import_module("applications.models"), inspect.isclass):
+    if cls.__module__ == 'applications.models':
+        AdminClass = type(name + "Admin", (admin.ModelAdmin,), {
+            "list_display": cls.get_admin_list_fields()
+        })
+        admin.site.register(cls, AdminClass)
+
+admin.site.site_header = "eBioKit admin site"

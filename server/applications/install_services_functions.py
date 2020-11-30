@@ -1,8 +1,8 @@
 """
-(C) Copyright 2017 SLU Global Bioinformatics Centre, SLU
+(C) Copyright 2021 SLU Global Bioinformatics Centre, SLU
 (http://sgbc.slu.se) and the eBioKit Project (http://ebiokit.eu).
 
-This file is part of The eBioKit portal 2017. All rights reserved.
+This file is part of The eBioKit portal 2021. All rights reserved.
 The eBioKit portal is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation, either version 3 of
@@ -41,8 +41,13 @@ import json
 import sys
 import os
 import django
+import logging
 from shutil import rmtree
 import requests
+
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 def docker_pull_handler(task_id, docker_name, settings=None):
@@ -376,7 +381,7 @@ def create_env_file(target_dir, data):
 
 
 def log(working_dir, message, task_id=""):
-    print task_id + " - " + message
+    logger.info(task_id + " - " + message)
     if working_dir != None:
         log_file = open(working_dir + "/" + task_id + ".log", 'a')
         log_file.write(task_id + " - " + message + "\n")
@@ -420,9 +425,9 @@ def get_service_ports(settings):
 
 
 def functionWrapper(taks_id, command):
-    print "Task " + taks_id + " started..."
+    logger.info("Task " + taks_id + " started...")
     output = subprocess.check_output(['bash', '-c', command])
-    print "Task " + taks_id + " finished"
+    logger.info("Task " + taks_id + " finished...")
 
 
 def prepare_upgrade_handler(task_id, instance_name=None, keep_data="keep", script_url=None, settings=None):

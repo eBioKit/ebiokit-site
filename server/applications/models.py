@@ -1,8 +1,8 @@
 """
-(C) Copyright 2017 SLU Global Bioinformatics Centre, SLU
+(C) Copyright 2021 SLU Global Bioinformatics Centre, SLU
 (http://sgbc.slu.se) and the eBioKit Project (http://ebiokit.eu).
 
-This file is part of The eBioKit portal 2017. All rights reserved.
+This file is part of The eBioKit portal 2021. All rights reserved.
 The eBioKit portal is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation, either version 3 of
@@ -28,9 +28,10 @@ Contributors:
 from django.db import models
 from django.utils import timezone
 
-#If new model is created, run this functions:
+# If new model is created, run this functions:
 # python manage.py makemigrations
 # python manage.py migrate
+
 
 class Application(models.Model):
     """ High-level application model"""
@@ -47,15 +48,36 @@ class Application(models.Model):
     enabled = models.BooleanField(default=1)
     raw_options = models.CharField(max_length=2000, default="")
 
+    # Functions for admin console
+    @staticmethod
+    def get_admin_list_fields():
+        return ["instance_name", "service", "port", "version", "installed", "enabled"]
+
+
 class RemoteServer(models.Model):
     name = models.CharField(max_length=100, unique=True)
     url = models.CharField(max_length=300)
     enabled = models.BooleanField(default=0)
 
+    @staticmethod
+    def get_admin_list_fields():
+        return ["name", "url", "enabled"]
+
 class Job(models.Model):
     id = models.CharField(max_length=100, primary_key=True)
     name = models.CharField(max_length=300)
     date = models.CharField(max_length=12)
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "date": self.date
+        }
+
+    @staticmethod
+    def get_admin_list_fields():
+        return ["id", "name", "date"]
 
 class Task(models.Model):
     job_id = models.CharField(max_length=100)
@@ -68,15 +90,50 @@ class Task(models.Model):
     incompatible = models.TextField(default="")
     status = models.CharField(max_length=100)
 
+    # Functions for admin console
+    @staticmethod
+    def get_admin_list_fields():
+        return ["job_id", "id", "name", "status", "command", "depend", "incompatible"]
+
+    def to_json(self):
+        return {
+            "job_id": self.job_id,
+            "id": self.id,
+            "name": self.name,
+            "command": self.command,
+            "function": self.function,
+            "params": self.params,
+            "depend": self.depend,
+            "incompatible": self.incompatible,
+            "status": self.status
+        }
+
+
 class Settings(models.Model):
     name = models.CharField(max_length=100, unique=True)
     value = models.CharField(max_length=300)
+
+    def to_json(self):
+        return {
+            "name": self.name,
+            "value": self.value
+        }
+
+    @staticmethod
+    def get_admin_list_fields():
+        return ["name", "value"]
+
 
 class User(models.Model):
     name = models.CharField(max_length=100)
     email = models.CharField(max_length=100, unique=True)
     password = models.CharField(max_length=100)
     role = models.CharField(max_length=20)
+    last_login = models.CharField(max_length=20, default="")
     session_id = models.CharField(max_length=100, default="")
 
+    # Functions for admin console
+    @staticmethod
+    def get_admin_list_fields():
+        return ["email", "name", "last_login", "role"]
 

@@ -1,8 +1,8 @@
 """
-(C) Copyright 2017 SLU Global Bioinformatics Centre, SLU
+(C) Copyright 2021 SLU Global Bioinformatics Centre, SLU
 (http://sgbc.slu.se) and the eBioKit Project (http://ebiokit.eu).
 
-This file is part of The eBioKit portal 2017. All rights reserved.
+This file is part of The eBioKit portal 2021. All rights reserved.
 The eBioKit portal is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation, either version 3 of
@@ -25,31 +25,37 @@ Contributors:
  Technical contact ebiokit@gmail.com
 """
 
-from rest_framework import viewsets
-from models import Application, RemoteServer, Settings, User
-from serializers import ApplicationSerializer
-from django.http import JsonResponse
-from rest_framework.decorators import detail_route
-from rest_framework import renderers
-from os import path as osPath, access as osAccess, W_OK as osWritable
-from resources.UserSessionManager import UserSessionManager
-from django.conf import settings
 
 import psutil
 import subprocess
 import requests
+import os
+import logging
+
+from os import W_OK as WRITABLE_OK
+from django.conf import settings
+from django.http import JsonResponse
+from rest_framework import viewsets, renderers
+from rest_framework.decorators import action
+
+from .models import Application, RemoteServer, Settings, User
+from .resources.UserSessionManager import UserSessionManager
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 class ApplicationViewSet(viewsets.ModelViewSet):
-    """ ViewSet for viewing and editing Application objects """
-    queryset = Application.objects.all()
-    serializer_class = ApplicationSerializer
-    lookup_field = "instance_name"
+    """ This file contains all the functions for managing the API requests related with Applications """
 
-    #---------------------------------------------------------------
-    #- RETRIEVE INFORMATION
-    #---------------------------------------------------------------
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    # ----------------------------------------------------------------------------------------------
+    #    _  _    _    _  _  ___   _     ___  ___  ___
+    #   | || |  /_\  | \| ||   \ | |   | __|| _ \/ __|
+    #   | __ | / _ \ | .` || |) || |__ | _| |   /\__ \
+    #   |_||_|/_/ \_\|_|\_||___/ |____||___||_|_\|___/
+    # --------------------------------------------------------------------------------------------
+
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def system_info(self, request, name=None):
         # UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
         return JsonResponse({
@@ -61,7 +67,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             "swap_use" : psutil.swap_memory().percent
         })
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def available_updates(self, request, name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -84,7 +90,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         return JsonResponse({'available_updates': responseContent })
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def available_applications(self, request, name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -95,7 +101,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return JsonResponse({'success': False, 'error_message' : 'Unable to retrieve available services from ' + mainRemoteServer.name})
         return JsonResponse({'repository_name': mainRemoteServer.name, 'repository_url': mainRemoteServer.url, 'availableApps': r.json().get("availableApps")})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def system_version(self, request, name=None):
         APP_VERSION = getattr(settings, "APP_VERSION", 0)
         try:
@@ -109,12 +115,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except:
             return JsonResponse({'system_version': APP_VERSION})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def get_settings(self, request):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
         return JsonResponse({'settings': self.read_settings(request)})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def update_app_settings(self, request):
         user_id = UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -135,7 +141,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     #---------------------------------------------------------------
     #- ADMINISTRATE SERVICES
     #---------------------------------------------------------------
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def status(self, request, instance_name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -143,12 +149,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         if (len(service_instance) == 0):
             return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
 
-        p = subprocess.Popen(osPath.join(osPath.dirname(osPath.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " status --no-cmd", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " status --no-cmd", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
 
         return JsonResponse({'status': output.replace("\n",""), 'status_msg' : err})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def start(self, request, instance_name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -156,13 +162,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         if (len(service_instance) == 0):
             return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
 
-        p = subprocess.Popen(osPath.join(osPath.dirname(osPath.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " start", stdout=subprocess.PIPE, shell=True)
+        p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " start", stdout=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
         returncode = p.returncode
         success = (returncode == 0)
         return JsonResponse({'success': success, "stdout": output, 'stderr': err})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def stop(self, request, instance_name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -170,13 +176,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         if (len(service_instance) == 0):
             return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
 
-        p = subprocess.Popen(osPath.join(osPath.dirname(osPath.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " stop", stdout=subprocess.PIPE, shell=True)
+        p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " stop", stdout=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
         returncode = p.returncode
         success = (returncode == 0)
         return JsonResponse({'success': success, "stdout": output, 'stderr': err})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def restart(self, request, instance_name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -184,13 +190,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         if (len(service_instance) == 0):
             return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
 
-        p = subprocess.Popen(osPath.join(osPath.dirname(osPath.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " restart", stdout=subprocess.PIPE, shell=True)
+        p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " restart", stdout=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
         returncode = p.returncode
         success = (returncode == 0)
         return JsonResponse({'success': success, "stdout": output, 'stderr': err})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def enable(self, request, instance_name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -199,7 +205,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         application_instance.save()
         return JsonResponse({'enabled': application_instance.enabled})
 
-    @detail_route(renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def disable(self, request, instance_name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -217,7 +223,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         # Get temporal directory
         settings["messages"] = {}
         settings["tmp_dir"] = Settings.objects.get(name="tmp_dir").value.rstrip("/") + "/"
-        if not osPath.exists(settings["tmp_dir"]) or not osAccess(settings["tmp_dir"], osWritable):
+        if not os.path.exists(settings["tmp_dir"]) or not os.access(settings["tmp_dir"], WRITABLE_OK):
             settings["messages"]["tmp_dir"] = "Invalid directory. Check if directory exists and if is writable."
         # Get data directory
         settings["ebiokit_data_location"] = Settings.objects.get(name="ebiokit_data_location").value.rstrip("/") + "/"
@@ -225,7 +231,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             settings["messages"]["ebiokit_data_location"] = "Invalid directory. Check if directory exists, if it is writable and if required subdirectories has been created."
         # Get nginx directory
         settings["nginx_data_location"] = Settings.objects.get(name="nginx_data_location").value.rstrip("/") + "/"
-        if not osPath.exists(settings["nginx_data_location"]) or not osAccess(settings["nginx_data_location"], osWritable):
+        if not os.path.exists(settings["nginx_data_location"]) or not os.access(settings["nginx_data_location"], WRITABLE_OK):
             settings["messages"]["nginx_data_location"] = "Invalid directory. Check if directory exists and if is writable."
 
         settings["platform"] = Settings.objects.get(name="platform").value
@@ -332,18 +338,18 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     def check_valid_data_location(self, data_location):
         subdir = data_location.rstrip("/") + "/ebiokit-services/uninstallers"
-        if not osPath.exists(subdir) or not osAccess(subdir, osWritable):
+        if not os.path.exists(subdir) or not os.access(subdir, WRITABLE_OK):
             return False
         subdir = data_location.rstrip("/") + "/ebiokit-services/launchers"
-        if not osPath.exists(subdir) or not osAccess(subdir, osWritable):
+        if not os.path.exists(subdir) or not os.access(subdir, WRITABLE_OK):
             return False
         subdir = data_location.rstrip("/") + "/ebiokit-services/init-scripts"
-        if not osPath.exists(subdir) or not osAccess(subdir, osWritable):
+        if not os.path.exists(subdir) or not os.access(subdir, WRITABLE_OK):
             return False
         subdir = data_location.rstrip("/") + "/ebiokit-data"
-        if not osPath.exists(subdir) or not osAccess(subdir, osWritable):
+        if not os.path.exists(subdir) or not os.access(subdir, WRITABLE_OK):
             return False
         subdir = data_location.rstrip("/") + "/ebiokit-logs"
-        if not osPath.exists(subdir) or not osAccess(subdir, osWritable):
+        if not os.path.exists(subdir) or not os.access(subdir, WRITABLE_OK):
             return False
         return True
