@@ -48,7 +48,8 @@
 				.then(
 					function successCallback(response){
 						$scope.isLoading = false;
-						$scope.services = ServiceList.setServices(response.data).getServices();
+                        debugger
+						$scope.services = ServiceList.setServices(response.data.data).getServices();
 						$scope.categories = ServiceList.updateCategories().getCategories();
 						if($scope.categories.length > 0){
 							$scope.categoryFilter=[$scope.categories[0].name];

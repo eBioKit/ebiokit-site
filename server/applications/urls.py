@@ -26,12 +26,12 @@ Contributors:
 """
 
 from django.conf.urls import url
-from rest_framework import renderers
 
 from .application_views import ApplicationViewSet
 from .job_views import JobViewSet
 from .user_views import UserViewSet
 
+from rest_framework import renderers
 
 # --------------------------------------------------------
 # URLs FOR SYSTEM STATUS
@@ -64,10 +64,14 @@ available_applications = ApplicationViewSet.as_view({
 #     'get': 'get_app_version'
 # }, renderer_classes=[renderers.JSONRenderer])
 
-application_list = ApplicationViewSet.as_view({
-    'get': 'list',
+api_get_all_applications = ApplicationViewSet.as_view({
+    'get': 'api_get_all_applications',
     'post': 'create'
 })
+#
+# application_list = ApplicationViewSet.as_view({
+#     'post': 'create'
+# })
 
 application_status = ApplicationViewSet.as_view({
     'get': 'status'
@@ -153,14 +157,17 @@ urlpatterns = [
     # URLs FOR SYSTEM STATUS
     # --------------------------------------------------------
     url(r'^system-info/$', system_info, name='system-info'),
-    url(r'^system-version/$', system_version, name='system-version'),
+    url(r'^system/version/$', system_version, name='system-version'),
     url(r'^system-settings/$', system_settings, name='system-settings'),
     # --------------------------------------------------------
     # URLs FOR APPLICATIONS MANAGEMENT
     # --------------------------------------------------------
-    url(r'^available-updates/$', available_updates, name='available-updates'),
-    url(r'^available-applications/$', available_applications, name='available-applications'),
-    url(r'^$', application_list, name='application-list'),
+    url(r'^applications/available-updates/$', available_updates, name='available-updates'),
+    url(r'^applications/available-applications/$', available_applications, name='available-applications'),
+    url(r'^applications/$', api_get_all_applications, name='application-list'),
+    # --------------------------------------------------------
+    # URLs FOR APPLICATION INSTANCE MANAGEMENT
+    # --------------------------------------------------------
     url(r'^(?P<instance_name>.+)/status/$', application_status, name='application-status'),
     url(r'^(?P<instance_name>.+)/start/$', application_start, name='application-start'),
     url(r'^(?P<instance_name>.+)/stop/$', application_stop, name='application-stop'),
@@ -183,5 +190,5 @@ urlpatterns = [
     url(r'^(?P<instance_name>.+)/upgrade/$', application_upgrade, name='application-upgrade'),
     url(r'^(?P<instance_name>.+)/uninstall/$', application_uninstall, name='application-uninstall'),
     url(r'^jobs/(?P<id>.*)$', application_jobs, name='application-jobs'),
-    url(r'^task/log/(?P<id>.*)/$', application_jobs_log, name='application-jobs-log'),
+    url(r'^task/log/(?P<id>.*)/$', application_jobs_log, name='application-jobs-log')
 ]

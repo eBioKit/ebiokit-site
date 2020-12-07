@@ -34,13 +34,14 @@ import logging
 
 from os import W_OK as WRITABLE_OK
 from django.conf import settings
+from rest_framework import viewsets
 from django.http import JsonResponse
-from rest_framework import viewsets, renderers
 from rest_framework.decorators import action
+from rest_framework import renderers
 
 from .models import Application, RemoteServer, Settings, User
 from .resources.UserSessionManager import UserSessionManager
-
+from .serializers import ApplicationSerializer
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     # --------------------------------------------------------------------------------------------
 
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def system_info(self, request, name=None):
+    def system_info(self, request):
         # UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
         return JsonResponse({
             'cpu_count' : psutil.cpu_count(),
@@ -91,9 +92,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return JsonResponse({'available_updates': responseContent })
 
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def available_applications(self, request, name=None):
+    def available_applications(self, request):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-
         #Step 1. Get all services from remote server
         mainRemoteServer = RemoteServer.objects.get(enabled=1)
         r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/available-applications")
@@ -102,7 +102,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return JsonResponse({'repository_name': mainRemoteServer.name, 'repository_url': mainRemoteServer.url, 'availableApps': r.json().get("availableApps")})
 
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def system_version(self, request, name=None):
+    def system_version(self, request):
         APP_VERSION = getattr(settings, "APP_VERSION", 0)
         try:
             UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
@@ -138,15 +138,23 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         self.update_settings(request)
         return JsonResponse({'success': True})
 
-    #---------------------------------------------------------------
-    #- ADMINISTRATE SERVICES
-    #---------------------------------------------------------------
+    # ---------------------------------------------------------------
+    #  ADMINISTRATE SERVICES
+    # ---------------------------------------------------------------
+    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
+    def api_get_all_applications(self, request):
+        queryset = Application.objects.all()
+        response = []
+        for sample in queryset:
+            response.append(sample.to_json())
+        return JsonResponse({"success": True, "data": response})
+
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def status(self, request, instance_name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
         service_instance = Application.objects.filter(instance_name=instance_name)[:1]
-        if (len(service_instance) == 0):
+        if len(service_instance) == 0:
             return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
 
         p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " status --no-cmd", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -159,7 +167,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
         service_instance = Application.objects.filter(instance_name=instance_name)[:1]
-        if (len(service_instance) == 0):
+        if len(service_instance) == 0:
             return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
 
         p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " start", stdout=subprocess.PIPE, shell=True)
@@ -173,7 +181,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
         service_instance = Application.objects.filter(instance_name=instance_name)[:1]
-        if (len(service_instance) == 0):
+        if len(service_instance) == 0:
             return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
 
         p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " stop", stdout=subprocess.PIPE, shell=True)
@@ -187,7 +195,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
         service_instance = Application.objects.filter(instance_name=instance_name)[:1]
-        if (len(service_instance) == 0):
+        if len(service_instance) == 0:
             return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
 
         p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " restart", stdout=subprocess.PIPE, shell=True)
@@ -214,9 +222,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         application_instance.save()
         return JsonResponse({'enabled': application_instance.enabled})
 
-    #---------------------------------------------------------------
-    #- OTHER FUNCTIONS
-    #---------------------------------------------------------------
+    # ---------------------------------------------------------------
+    # - OTHER FUNCTIONS
+    # ---------------------------------------------------------------
 
     def read_settings(self, request):
         settings = request.data.get("settings", {})
