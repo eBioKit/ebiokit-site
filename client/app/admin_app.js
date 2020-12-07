@@ -132,7 +132,7 @@
 				case "system-settings":
 				return myAppConfig.SERVER_URL + "api/system/system-settings/";
 				case "system-version":
-				return myAppConfig.SERVER_URL + "api/system/system-version/";
+				return myAppConfig.SERVER_URL + "api/system/version/";
 				case "service-list":
 				return myAppConfig.SERVER_URL + "api/applications/";
 				case "service-info":
