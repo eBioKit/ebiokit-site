@@ -1,8 +1,8 @@
 """
-(C) Copyright 2017 SLU Global Bioinformatics Centre, SLU
+(C) Copyright 2021 SLU Global Bioinformatics Centre, SLU
 (http://sgbc.slu.se) and the eBioKit Project (http://ebiokit.eu).
 
-This file is part of The eBioKit portal 2017. All rights reserved.
+This file is part of The eBioKit portal 2021. All rights reserved.
 The eBioKit portal is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation, either version 3 of
@@ -28,11 +28,13 @@ Contributors:
 from rest_framework import serializers
 from applications.models import Application, RemoteServer, Job, Task, Settings, User
 
+
 class ApplicationSerializer(serializers.ModelSerializer):
     """ Serializer to represent the Application model """
     class Meta:
         model = Application
         fields = ("instance_name", "service", "version", "title", "description", "categories", "website", "port", "type", "installed", "enabled")
+
 
 class RemoteServerSerializer(serializers.ModelSerializer):
     """ Serializer to represent the RemoteServer model """
@@ -40,23 +42,27 @@ class RemoteServerSerializer(serializers.ModelSerializer):
         model = RemoteServer
         fields = ("name", "url", "enabled")
 
+
 class JobSerializer(serializers.ModelSerializer):
     """ Serializer to represent the RemoteServer model """
     class Meta:
-        model = RemoteServer
+        model = Job
         fields = ("id", "name", "date")
+
 
 class TaskSerializer(serializers.ModelSerializer):
     """ Serializer to represent the RemoteServer model """
     class Meta:
-        model = RemoteServer
+        model = Task
         fields = ("job_id", "id", "name", "command", "status")
+
 
 class SettingsSerializer(serializers.ModelSerializer):
     """ Serializer to represent the Settings model """
     class Meta:
         model = Settings
         fields = ("name", "value")
+
 
 class UserSerializer(serializers.ModelSerializer):
     """ Serializer to represent the User model """
