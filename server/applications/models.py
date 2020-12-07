@@ -53,6 +53,21 @@ class Application(models.Model):
     def get_admin_list_fields():
         return ["instance_name", "service", "port", "version", "installed", "enabled"]
 
+    def to_json(self):
+        return {
+            "instance_name": self.instance_name,
+            "service": self.service,
+            "version": self.version,
+            "title": self.title,
+            "description": self.description,
+            "categories": self.categories,
+            "website": self.website,
+            "port": self.port,
+            "type": self.type,
+            "installed": self.installed,
+            "enabled": self.enabled,
+            "raw_options": self.raw_options
+        }
 
 class RemoteServer(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -62,6 +77,7 @@ class RemoteServer(models.Model):
     @staticmethod
     def get_admin_list_fields():
         return ["name", "url", "enabled"]
+
 
 class Job(models.Model):
     id = models.CharField(max_length=100, primary_key=True)
@@ -78,6 +94,7 @@ class Job(models.Model):
     @staticmethod
     def get_admin_list_fields():
         return ["id", "name", "date"]
+
 
 class Task(models.Model):
     job_id = models.CharField(max_length=100)
