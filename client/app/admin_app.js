@@ -124,13 +124,13 @@
 			extra = (extra || "");
 			switch (service) {
 				case "user-rest":
-				return myAppConfig.SERVER_URL + "api/system/user/";
+				return myAppConfig.SERVER_URL + "api/user/";
 				case "session-rest":
-				return myAppConfig.SERVER_URL + "api/system/session/?admin=1";
+				return myAppConfig.SERVER_URL + "api/session/";
 				case "system-info":
-				return myAppConfig.SERVER_URL + "api/system/system-info/";
+				return myAppConfig.SERVER_URL + "api/system/info/";
 				case "system-settings":
-				return myAppConfig.SERVER_URL + "api/system/system-settings/";
+				return myAppConfig.SERVER_URL + "api/system/settings/";
 				case "system-version":
 				return myAppConfig.SERVER_URL + "api/system/version/";
 				case "service-list":
