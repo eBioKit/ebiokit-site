@@ -69,6 +69,7 @@ class Application(models.Model):
             "raw_options": self.raw_options
         }
 
+
 class RemoteServer(models.Model):
     name = models.CharField(max_length=100, unique=True)
     url = models.CharField(max_length=300)
