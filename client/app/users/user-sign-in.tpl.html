@@ -23,23 +23,22 @@
 		</span>
 		<input name="password" type="password" id="mainPass" class="form-control" placeholder="Password" style="margin-bottom: 0; margin-top: 20px;" required=""
 		ng-model="userInfo.password"
-		ng-minlength="6"
+		ng-minlength="8"
 		/>
-		<span ng-if="!isLogin">
+        <span ng-if="!isLogin">
 			<span class="text-danger" ng-show="signForm.password.$error.required">Required!</span>
-			<span class="text-danger" ng-show="signForm.password.$error.minlength">Password must be at least 6 characters.</span>
+			<span class="text-danger" ng-show="signForm.password.$error.minlength">Password must contain at least 8 characters (one upper case, one number and no spaces).</span>
 		</span>
-
 		<input name="passconfirm" type="password" class="form-control" placeholder="Repeat the password" style="margin-bottom: 0; margin-top: 10px;" required=""
 		ng-model="userInfo.passconfirm"
 		ng-init=""
-		ng-minlength="6"
+		ng-minlength="8"
 		ng-minlength="50"
 		ng-if="!isLogin"
 		ng-pwcheck="mainPass"
 		/>
-		<span ng-if="!isLogin">
-			<span class="text-danger" ng-show="signForm.passconfirm.$error.pwmatch">Passwords are different.</span>
+        <span ng-if="errorMessage">
+			<span class="text-danger">{{errorMessage}}</span>
 		</span>
 		<div style="margin-top: 30px;">
 			<a href="javascript:void(0);" class="text-info" ng-show="isLogin" ng-click="isLogin=false">Create an account</a>

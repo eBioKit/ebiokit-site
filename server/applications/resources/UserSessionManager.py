@@ -26,9 +26,10 @@ Contributors:
 """
 
 import base64
+import time
 from django.conf import settings
 from ..models import User
-from ..serializers import UserSerializer
+
 
 class UserSessionManager(object):
 
@@ -39,14 +40,15 @@ class UserSessionManager(object):
             import string
             import random
             user_id = str(user_id)
-            sessionToken =''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(50))
+            sessionToken = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(50))
             user = User.objects.get(email=user_id)
             user.session_id = sessionToken
+            user.last_login = time.strftime("%Y%m%d_%H%M%S")
             user.save()
             return sessionToken
 
         def close_session(self, sessionToken):
-            sessionToken = base64.b64decode(sessionToken.replace("%3D", "="))
+            sessionToken = base64.b64decode(sessionToken.replace("%3D", "=")).decode('utf-8')
             user_id = sessionToken.split(":", 1)[0]
             sessionToken = sessionToken.split(":", 1)[1]
             try:
@@ -54,24 +56,35 @@ class UserSessionManager(object):
                 if (user != None):
                     user.session_id = ""
                     user.save()
-                    return True
+                    return user_id
             except:
                 pass
             return False
 
-        def validate_session(self, sessionToken):
+        def validate_session(self, sessionToken, roles=None):
             DEBUG_MODE = (getattr(settings, "DEBUG", None) is True)
-            sessionToken = base64.b64decode(sessionToken.replace("%3D", "="))
+            sessionToken = base64.b64decode(sessionToken.replace("%3D", "=")).decode('utf-8')
             user_id = sessionToken.split(":", 1)[0]
             sessionToken = sessionToken.split(":", 1)[1]
-            if not DEBUG_MODE and (user_id == 'None' or sessionToken == None or sessionToken == ""):
+            if not DEBUG_MODE and (user_id == 'None' or sessionToken is None or sessionToken == ""):
                 raise CredentialException("[b]User not valid[/b]. It looks like your session is not valid, please log-in again.")
             try:
                 user = User.objects.get(email=user_id, session_id=sessionToken)
             except:
                 user = None
-            if not DEBUG_MODE and user == None:
+            if not DEBUG_MODE and user is None:
                 raise CredentialException("[b]User not valid[/b]. It looks like your session is not valid, please log-in again.")
+
+            if roles:
+                valid_role = False
+                user_roles = user.role.split(",")
+                user_roles.append("admin")
+                for role in roles:
+                    if role in user_roles:
+                        valid_role = True
+                        break
+                if not valid_role:
+                    raise CredentialException("[b]User not valid[/b]. Your user is not valid for this action (invalid role).")
             return user_id
 
         def validate_admin_session(self, sessionToken):
@@ -81,6 +94,14 @@ class UserSessionManager(object):
             if not DEBUG_MODE and not(user.role in ["admin", "superuser"]):
                 raise CredentialException("[b]User not valid[/b]. Your user is not a valid administrator for this machine.")
             return user_id
+
+        def get_user_role(self, user_id):
+            try:
+                user = User.objects.get(email=user_id)
+                return user.role.split(",")
+            except:
+                return None
+
 
     # storage for the instance reference
     __instance = None
@@ -102,6 +123,7 @@ class UserSessionManager(object):
     def __setattr__(self, attr, value):
         """ Delegate access to implementation """
         return setattr(self.__instance, attr, value)
+
 
 class CredentialException(Exception):
     pass
