@@ -107,16 +107,16 @@ application_detail = ApplicationViewSet.as_view({
 # --------------------------------------------------------
 # URLs FOR USERS
 # --------------------------------------------------------
-users = UserViewSet.as_view({
+api_users = UserViewSet.as_view({
     'get': 'get_user',
-    'post': 'create_user',
-    'update': 'update_user'
+    'post': 'api_create_user',
+    'update': 'update_user',
 })
 
-sessions = UserViewSet.as_view({
-    'get': 'validate_session',
-    'post': 'sign_in',
-    'delete': 'sign_out'
+api_sessions = UserViewSet.as_view({
+    'get': 'api_validate_session',
+    'post': 'api_sign_in',
+    'delete': 'api_sign_out',
 })
 
 # --------------------------------------------------------
@@ -156,9 +156,15 @@ urlpatterns = [
     # --------------------------------------------------------
     # URLs FOR SYSTEM STATUS
     # --------------------------------------------------------
-    url(r'^system-info/$', system_info, name='system-info'),
+    url(r'^system/info/$', system_info, name='system-info'),
     url(r'^system/version/$', system_version, name='system-version'),
-    url(r'^system-settings/$', system_settings, name='system-settings'),
+    url(r'^system/settings/$', system_settings, name='system-settings'),
+    # --------------------------------------------------------
+    # URLs FOR USERS
+    # --------------------------------------------------------
+    url(r'^user/$', api_users, name='api_users'),
+    url(r'^session/$', api_sessions, name='api_sessions'),
+    # url(r'^version/$', version, name='version'),
     # --------------------------------------------------------
     # URLs FOR APPLICATIONS MANAGEMENT
     # --------------------------------------------------------
@@ -175,12 +181,6 @@ urlpatterns = [
     url(r'^(?P<instance_name>.+)/enable/$', application_enable, name='application-enable'),
     url(r'^(?P<instance_name>.+)/disable/$', application_disable, name='application-disable'),
     url(r'^(?P<instance_name>.+)/$', application_detail, name='application-detail'),
-    # --------------------------------------------------------
-    # URLs FOR USERS
-    # --------------------------------------------------------
-    url(r'^user/$', users, name='users'),
-    url(r'^session/$', sessions, name='sessions'),
-    # url(r'^version/$', version, name='version'),
     # --------------------------------------------------------
     # URLs FOR JOBS
     # --------------------------------------------------------
