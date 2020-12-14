@@ -48,6 +48,9 @@ logger = logging.getLogger(__name__)
 
 class ApplicationViewSet(viewsets.ModelViewSet):
     """ This file contains all the functions for managing the API requests related with Applications """
+    queryset = Application.objects.all()
+    serializer_class = ApplicationSerializer
+    lookup_field = "instance_name"
 
     # ----------------------------------------------------------------------------------------------
     #    _  _    _    _  _  ___   _     ___  ___  ___
@@ -60,23 +63,23 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def system_info(self, request):
         # UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
         return JsonResponse({
-            'cpu_count' : psutil.cpu_count(),
-            "cpu_use" : psutil.cpu_percent(),
-            "mem_total" : psutil.virtual_memory().total/(1024.0**3),
-            "mem_use" : psutil.virtual_memory().percent,
+            'cpu_count': psutil.cpu_count(),
+            "cpu_use": psutil.cpu_percent(),
+            "mem_total": psutil.virtual_memory().total/(1024.0**3),
+            "mem_use": psutil.virtual_memory().percent,
             "swap_total": psutil.swap_memory().total/(1024.0**3),
-            "swap_use" : psutil.swap_memory().percent
+            "swap_use": psutil.swap_memory().percent
         })
 
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def available_updates(self, request, name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
-        #Step 1. Get all services from remote server
+        # Step 1. Get all services from remote server
         mainRemoteServer = RemoteServer.objects.get(enabled=1)
         r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/available-applications")
         if r.status_code != 200:
-            return JsonResponse({'success': False, 'error_message' : 'Unable to retrieve available services from ' + mainRemoteServer.name})
+            return JsonResponse({'success': False, 'error_message': 'Unable to retrieve available services from ' + mainRemoteServer.name})
 
         installedApps = Application.objects.all()
         currentVersions = {}
@@ -87,7 +90,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         availableApps = r.json().get("availableApps")
         for application in availableApps:
             if currentVersions.has_key(application.get("name")) and currentVersions.get(application.get("name")) != application.get("version"):
-                responseContent.append({'name' : application.get("name"), 'current_version' : currentVersions.get(application.get("name")), "new_version" : application.get("version")})
+                responseContent.append({'name': application.get("name"), 'current_version': currentVersions.get(application.get("name")), "new_version": application.get("version")})
 
         return JsonResponse({'available_updates': responseContent })
 
@@ -98,7 +101,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         mainRemoteServer = RemoteServer.objects.get(enabled=1)
         r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/available-applications")
         if r.status_code != 200:
-            return JsonResponse({'success': False, 'error_message' : 'Unable to retrieve available services from ' + mainRemoteServer.name})
+            return JsonResponse({'success': False, 'error_message': 'Unable to retrieve available services from ' + mainRemoteServer.name})
         return JsonResponse({'repository_name': mainRemoteServer.name, 'repository_url': mainRemoteServer.url, 'availableApps': r.json().get("availableApps")})
 
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
@@ -110,7 +113,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             mainRemoteServer = RemoteServer.objects.get(enabled=1)
             r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/latest-version")
             if r.status_code != 200:
-                return JsonResponse({'success': False, 'system_version': APP_VERSION, 'error_message' : 'Unable to retrieve the latest version from ' + mainRemoteServer.name})
+                return JsonResponse({'success': False, 'system_version': APP_VERSION, 'error_message': 'Unable to retrieve the latest version from ' + mainRemoteServer.name})
             return JsonResponse({'system_version': APP_VERSION, 'latest_version': r.json().get("latest_version")})
         except:
             return JsonResponse({'system_version': APP_VERSION})
@@ -160,7 +163,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " status --no-cmd", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
 
-        return JsonResponse({'status': output.replace("\n",""), 'status_msg' : err})
+        return JsonResponse({'status': output.replace("\n",""), 'status_msg': err})
 
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
     def start(self, request, instance_name=None):
@@ -247,9 +250,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         remote_servers = RemoteServer.objects.values()
         settings["available_remote_servers"] = []
         for server in remote_servers:
-            settings["available_remote_servers"].append({'name' : server.get("name"), 'url' : server.get("url")})
+            settings["available_remote_servers"].append({'name': server.get("name"), 'url': server.get("url")})
         server = RemoteServer.objects.get(enabled=True)
-        settings["remote_server"] = {'name' : server.name, 'url' : server.url}
+        settings["remote_server"] = {'name': server.name, 'url': server.url}
 
         admin_users = User.objects.filter(role = "admin").values()
         settings["admin_users"] = []

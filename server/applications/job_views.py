@@ -39,12 +39,16 @@ from .models import Application, RemoteServer, Job, Task, Settings
 from .resources.UserSessionManager import UserSessionManager
 from .resources.pysiq_api import enqueue as pysiq_enqueue, get_result as  pysiq_get_result, check_status as  pysiq_check_status
 from .install_services_functions import clean_data_handler
+from .serializers import JobSerializer
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
 
 class JobViewSet(viewsets.ModelViewSet):
     """ This file contains all the functions for managing the API requests related with Jobs """
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+    lookup_field = "id"
 
     # ----------------------------------------------------------------------------------------------
     #    _  _    _    _  _  ___   _     ___  ___  ___
