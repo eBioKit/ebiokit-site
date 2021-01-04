@@ -113,6 +113,10 @@ api_users = UserViewSet.as_view({
     'update': 'update_user',
 })
 
+api_user_password = UserViewSet.as_view({
+    'post': 'api_update_user_password'
+})
+
 api_sessions = UserViewSet.as_view({
     'get': 'api_validate_session',
     'post': 'api_sign_in',
@@ -162,6 +166,7 @@ urlpatterns = [
     # --------------------------------------------------------
     # URLs FOR USERS
     # --------------------------------------------------------
+    url(r'^user/password/$', api_user_password, name='api_user_password'),
     url(r'^user/$', api_users, name='api_users'),
     url(r'^session/$', api_sessions, name='api_sessions'),
     # url(r'^version/$', version, name='version'),

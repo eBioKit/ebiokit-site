@@ -183,8 +183,8 @@
       $http($rootScope.getHttpRequestConfig("GET", "system-version", {})).
       then(
         function successCallback(response) {
-          $scope.settings.latest_version = response.data.latest_version;
-          $scope.settings.system_version = response.data.system_version;
+          $scope.settings.latest_version = "" + response.data.latest_version;
+          $scope.settings.system_version = "" + response.data.system_version;
         },
         function errorCallback(response) {
           $scope.isLoading = false;
@@ -277,6 +277,64 @@
     this.refreshStoreContent = function() {
       this.retrieveServicesListData(true, this, "retrieveAvailableApplications");
     };
+
+    this.updateUserPasswordHandler = function() {
+        var valid = $scope.settings.password
+        && $scope.settings.password.length > 7
+        && $scope.settings.password === $scope.settings.passconfirm
+        if ( valid ) {
+            var me = this;
+            $http($rootScope.getHttpRequestConfig("POST", "user-password", {
+                data: {
+                    "password": $scope.settings.password
+                }
+            })).
+            then(
+                function successCallback(response) {
+                    response = response.data;
+                    if (response.success === true) {
+                        $dialogs.showSuccessDialog("Password was succesfully update.");
+                    } else {
+                        $scope.errorPasswordsMessage = response.other.error_message
+                        return;
+                    }
+                },
+                function errorCallback(response) {
+                    if (response.data && [404001].indexOf(response.data.err_code) !== -1) {
+                        $dialogs.showErrorDialog("Invalid user or password.");
+                        return;
+                    }
+                    debugger;
+                    var message = "Failed while updating the user's password.";
+                    $dialogs.showErrorDialog(message, {
+                        logMessage: message + " at ServiceListController:updateUserPasswordHandler."
+                    });
+                    console.error(response.data);
+                    }
+            );
+        } else if(! $scope.settings.password){
+            $scope.errorPasswordsMessage = "Password can not be empty."
+        } else if($scope.settings.password !== $scope.settings.passconfirm){
+            $scope.errorPasswordsMessage = "Passwords do not match."
+        } else if($scope.settings.password.length <= 7){
+            $scope.errorPasswordsMessage = "Password must contain at least 8 characters (one upper case, one number and no spaces)."
+        };
+    };
+
+    this.isNewerVersion = function(old_version, new_version) {
+        if(! old_version || ! new_version){
+            return false;
+        }
+        const oldParts = old_version.split('.')
+        const newParts = new_version.split('.')
+        for (var i = 0; i < newParts.length; i++) {
+            const a = ~~newParts[i] // parse int
+            const b = ~~oldParts[i] // parse int
+            if (a > b) return true
+            if (a < b) return false
+        }
+        return false
+    }
 
     this.updateSystemSettingsHandler = function() {
       if ($scope.prev_password === "" || $scope.settings.password !== $scope.settings.password2) {

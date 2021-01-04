@@ -125,6 +125,8 @@
 			switch (service) {
 				case "user-rest":
 				return myAppConfig.SERVER_URL + "api/user/";
+				case "user-password":
+				return myAppConfig.SERVER_URL + "api/user/password/";
 				case "session-rest":
 				return myAppConfig.SERVER_URL + "api/session/";
 				case "system-info":
@@ -208,7 +210,7 @@
 			$http($rootScope.getHttpRequestConfig("GET", "system-version", {})).
 			then(
 				function successCallback(response){
-					$rootScope.systemVersion = response.data.system_version;
+					$rootScope.systemVersion = "" + response.data.system_version;
 				},
 				function errorCallback(response){
 					$scope.isLoading = false;

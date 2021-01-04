@@ -84,10 +84,10 @@ class UserViewSet(viewsets.ModelViewSet):
         return JsonResponse({'success': False, 'error_message': 'Not implemented"'})
 
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def update_user_password(self, request):
+    def api_update_user_password(self, request):
         try:
             # STEP 0. CHECK IF USER IS VALID
-            user_id = UserSessionManager().validate_session(request.COOKIES.get('sessionId'))
+            user_id = UserSessionManager().validate_session(request.COOKIES.get('ebiokitsession'))
             # Validate information
             password = request.data.get("password").encode('utf-8')
             if not self.validate_password(password=password.decode('utf-8')):

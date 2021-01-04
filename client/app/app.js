@@ -137,7 +137,7 @@
 			$http($rootScope.getHttpRequestConfig("GET", "system-version", {})).
 			then(
 				function successCallback(response){
-					$rootScope.systemVersion = response.data.system_version;
+					$rootScope.systemVersion = ""  + response.data.system_version;
 				},
 				function errorCallback(response){
 					$scope.isLoading = false;

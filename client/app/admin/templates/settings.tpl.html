@@ -22,41 +22,26 @@
             <h3>Account settings</h3>
             <h4>Change your password</h4>
             <div class="form-group">
-              <label class="control-label col-sm-2" for="password">Previous password:</label>
-              <div class="col-sm-9">
-                <input type="password" class="form-control" id="prev_password" ng-model="settings.prev_password">
-              </div>
-              <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Your current password for your eBioKit account."></i>
-            </div>
-            <div class="form-group" ng-show="settings.invalid_prev_pass">
-              <p class="col-sm-2"></p>
-              <p class="text-danger col-sm-9">Invalid password</p>
-            </div>
-            <div class="form-group">
               <label class="control-label col-sm-2" for="password">New Password:</label>
               <div class="col-sm-9">
                 <input type="password" class="form-control" id="password" ng-model="settings.password">
               </div>
               <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="The password for your eBioKit account."></i>
             </div>
-            <div class="form-group" ng-show="settings.password && settings.password.length < 6">
-              <p class="col-sm-2"></p>
-              <p class="text-danger col-sm-9">Invalid password. Password must be at least 6 characters.</p>
-            </div>
             <div class="form-group">
-              <label class="control-label col-sm-2" for="password2">Confirm password:</label>
+              <label class="control-label col-sm-2" for="passconfirm">Confirm password:</label>
               <div class="col-sm-9">
-                <input type="password" class="form-control" id="password2" ng-model="settings.password2">
+                <input type="password" class="form-control" id="passconfirm" ng-model="settings.passconfirm">
               </div>
               <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="Repeat the password."></i>
             </div>
-            <div class="form-group" ng-show="settings.password !== settings.password2">
+            <div class="form-group" ng-if="errorPasswordsMessage">
               <p class="col-sm-2"></p>
-              <p class="text-danger col-sm-9">Passwords do not match!</p>
+              <span class="text-danger col-sm-9">{{errorPasswordsMessage}}</span>
             </div>
             <div class="form-group">
               <div style="text-align: right;margin-right: 105px">
-                <a ng-show="isLoading !== true" class="btn btn-success btn-lg" ng-click="controller.updateSystemSettingsHandler()"><i class="fa fa-check"></i> Update settings</a>
+                <a ng-show="isLoading !== true" class="btn btn-success btn-lg" ng-click="controller.updateUserPasswordHandler()"><i class="fa fa-check"></i> Update password</a>
                 <a ng-show="isLoading === true" disabled class="btn btn-default btn-lg"><i class="fa fa-spinner fa-spin fa-fw"></i> Saving</a>
               </div>
             </div>
@@ -111,12 +96,14 @@
                 </div>
                 <i style="color: #31708f;line-height: 30px;" class="fa fa-question-circle" uib-tooltip="The directory used for storing temporal files during the installation of new components."></i>
               </div>
-              <h4 class="control-label col-sm-2" ></h4>
-              <h4 class="col-sm-10">
-                <b>eBioKit {{'v' + settings["system_version"]}}</b>
-                <span class="label label-info">Update available (v{{settings["latest_version"]}})</span>
-                <a ng-if="settings.system_version < settings.latest_version" href="/update" target="_blank"> More info</a>
-              </h4>
+              <label class="control-label col-sm-2" for="tmp_dir">Current version:</label>
+              <div class="col-sm-10">
+                <h5>eBioKit {{'v' + settings["system_version"]}}</h5>
+                <div ng-if="controller.isNewerVersion(settings.system_version, settings.latest_version)">
+                    <span class="label label-warning">Update available (v{{settings["latest_version"]}})</span>
+                    <a href="/update" target="_blank"> More info</a>
+                </div>
+            </div>
               <div class="form-group">
                 <div style="text-align: right;margin-right: 105px">
                   <a ng-show="isLoading !== true" class="btn btn-success btn-lg" ng-click="controller.updateSystemSettingsHandler()"><i class="fa fa-check"></i> Update settings</a>
