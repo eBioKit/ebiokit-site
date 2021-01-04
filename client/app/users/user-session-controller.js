@@ -52,7 +52,7 @@
 
         this.signInButtonHandler = function() {
             if ($scope.userInfo.email !== '' && $scope.userInfo.password !== '') {
-                $http($rootScope.getHttpRequestConfig("POST", "session-rest", {
+                $http($rootScope.getHttpRequestConfig("POST", "session-login", {
                     data: {
                         "token": btoa($scope.userInfo.email + ":" + $scope.userInfo.password)
                     }
@@ -133,7 +133,7 @@
         this.signOutButtonHandler = function() {
             delete $scope.userInfo.email;
 
-            $http($rootScope.getHttpRequestConfig("DELETE", "session-rest", {
+            $http($rootScope.getHttpRequestConfig("POST", "session-logout", {
                 data: {
                     "token": btoa($scope.userInfo.email + ":" + $scope.userInfo.password)
                 }

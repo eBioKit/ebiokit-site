@@ -117,10 +117,14 @@ api_user_password = UserViewSet.as_view({
     'post': 'api_update_user_password'
 })
 
-api_sessions = UserViewSet.as_view({
-    'get': 'api_validate_session',
-    'post': 'api_sign_in',
-    'delete': 'api_sign_out',
+api_session_validate = UserViewSet.as_view({
+    'get': 'api_session_validate'
+})
+api_session_login = UserViewSet.as_view({
+    'post': 'api_session_login'
+})
+api_session_logout = UserViewSet.as_view({
+    'post': 'api_session_logout'
 })
 
 # --------------------------------------------------------
@@ -168,7 +172,9 @@ urlpatterns = [
     # --------------------------------------------------------
     url(r'^user/password/$', api_user_password, name='api_user_password'),
     url(r'^user/$', api_users, name='api_users'),
-    url(r'^session/$', api_sessions, name='api_sessions'),
+    url(r'^session/login/$', api_session_login, name='api_session_login'),
+    url(r'^session/logout/$', api_session_logout, name='api_session_logout'),
+    url(r'^session/validate/$', api_session_validate, name='api_session_validate'),
     # url(r'^version/$', version, name='version'),
     # --------------------------------------------------------
     # URLs FOR APPLICATIONS MANAGEMENT

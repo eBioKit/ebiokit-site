@@ -127,8 +127,12 @@
 				return myAppConfig.SERVER_URL + "api/user/";
 				case "user-password":
 				return myAppConfig.SERVER_URL + "api/user/password/";
-				case "session-rest":
-				return myAppConfig.SERVER_URL + "api/session/";
+				case "session-logout":
+				return myAppConfig.SERVER_URL + "api/session/logout/";
+				case "session-login":
+				return myAppConfig.SERVER_URL + "api/session/login/";
+				case "session-validate":
+				return myAppConfig.SERVER_URL + "api/session/validate/";
 				case "system-info":
 				return myAppConfig.SERVER_URL + "api/system/info/";
 				case "system-settings":

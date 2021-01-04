@@ -100,7 +100,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def api_validate_session(self, request):
+    def api_session_validate(self, request):
         try:
             # STEP 0. CHECK IF USER IS VALID
             UserSessionManager().validate_session(request.COOKIES.get('sessionId'))
@@ -109,7 +109,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def api_sign_in(self, request):
+    def api_session_login(self, request):
         info = base64.b64decode(request.data.get("token")).decode('utf-8')
         info = info.split(":", 1)
         try:
@@ -124,10 +124,10 @@ class UserViewSet(viewsets.ModelViewSet):
             return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
     @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def api_sign_out(self, request):
+    def api_session_logout(self, request):
         try:
             # STEP 0. CHECK IF USER IS VALID
-            if request.COOKIES.get('ebiokitsession') != None:
+            if request.COOKIES.get('ebiokitsession') is not None:
                 UserSessionManager().close_session(request.COOKIES.get('ebiokitsession'))
             return JsonResponse({'success': True})
         except Exception as ex:
