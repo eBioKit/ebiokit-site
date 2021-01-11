@@ -1,0 +1,3 @@
+[submodule "server/queue"]
+	path = server/queue
+	url = https://github.com/fikipollo/PySiQ.git
