@@ -79,6 +79,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser'
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer'
+    ]
+}
+
 ROOT_URLCONF = 'urls'
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
@@ -94,7 +103,7 @@ if DEBUG:
     STATICFILES_DIRS = [FRONTEND_ROOT]
     TEMPLATE_DIRS = [FRONTEND_ROOT]
 else:
-    STATIC_ROOT= os.path.join(BASE_DIR, 'static')
+    STATIC_ROOT=(os.path.join(BASE_DIR, 'static'))
     STATICFILES_DIRS = [os.path.join(BASE_DIR, '../client/dist')]
     TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'static')]
 
