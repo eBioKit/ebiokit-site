@@ -73,20 +73,20 @@ api_get_all_applications = ApplicationViewSet.as_view({
 #     'post': 'create'
 # })
 
-application_status = ApplicationViewSet.as_view({
-    'get': 'status'
+api_service_status = ApplicationViewSet.as_view({
+    'get': 'api_service_status'
 }, renderer_classes=[renderers.JSONRenderer])
 
-application_start = ApplicationViewSet.as_view({
-    'get': 'start'
+api_service_start = ApplicationViewSet.as_view({
+    'post': 'api_service_start'
 }, renderer_classes=[renderers.JSONRenderer])
 
-application_stop = ApplicationViewSet.as_view({
-    'get': 'stop'
+api_service_stop = ApplicationViewSet.as_view({
+    'post': 'api_service_stop'
 }, renderer_classes=[renderers.JSONRenderer])
 
-application_restart = ApplicationViewSet.as_view({
-    'get': 'restart'
+api_service_restart = ApplicationViewSet.as_view({
+    'post': 'api_service_restart'
 }, renderer_classes=[renderers.JSONRenderer])
 
 application_enable = ApplicationViewSet.as_view({
@@ -185,10 +185,10 @@ urlpatterns = [
     # --------------------------------------------------------
     # URLs FOR APPLICATION INSTANCE MANAGEMENT
     # --------------------------------------------------------
-    url(r'^(?P<instance_name>.+)/status/$', application_status, name='application-status'),
-    url(r'^(?P<instance_name>.+)/start/$', application_start, name='application-start'),
-    url(r'^(?P<instance_name>.+)/stop/$', application_stop, name='application-stop'),
-    url(r'^(?P<instance_name>.+)/restart/$', application_restart, name='application-restart'),
+    url(r'^(?P<instance_name>.+)/status/$', api_service_status, name='api_service_status'),
+    url(r'^(?P<instance_name>.+)/start/$', api_service_start, name='api_service_start'),
+    url(r'^(?P<instance_name>.+)/stop/$', api_service_stop, name='api_service_stop'),
+    url(r'^(?P<instance_name>.+)/restart/$', api_service_restart, name='api_service_restart'),
     url(r'^(?P<instance_name>.+)/enable/$', application_enable, name='application-enable'),
     url(r'^(?P<instance_name>.+)/disable/$', application_disable, name='application-disable'),
     url(r'^(?P<instance_name>.+)/$', application_detail, name='application-detail'),

@@ -59,8 +59,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     #   |_||_|/_/ \_\|_|\_||___/ |____||___||_|_\|___/
     # --------------------------------------------------------------------------------------------
 
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True)
     def system_info(self, request):
+        # TODO: restrict to authorized users?
         # UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
         return JsonResponse({
             'cpu_count': psutil.cpu_count(),
@@ -71,143 +72,212 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             "swap_use": psutil.swap_memory().percent
         })
 
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True)
     def available_updates(self, request, name=None):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-
-        # Step 1. Get all services from remote server
-        mainRemoteServer = RemoteServer.objects.get(enabled=1)
-        r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/available-applications")
-        if r.status_code != 200:
-            return JsonResponse({'success': False, 'error_message': 'Unable to retrieve available services from ' + mainRemoteServer.name})
-
-        installedApps = Application.objects.all()
-        currentVersions = {}
-        for application in installedApps.iterator():
-            currentVersions[application.instance_name] = application.version
-
-        responseContent = []
-        availableApps = r.json().get("availableApps")
-        for application in availableApps:
-            if currentVersions.has_key(application.get("name")) and currentVersions.get(application.get("name")) != application.get("version"):
-                responseContent.append({'name': application.get("name"), 'current_version': currentVersions.get(application.get("name")), "new_version": application.get("version")})
-
-        return JsonResponse({'available_updates': responseContent })
-
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def available_applications(self, request):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-        #Step 1. Get all services from remote server
-        mainRemoteServer = RemoteServer.objects.get(enabled=1)
-        r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/available-applications")
-        if r.status_code != 200:
-            return JsonResponse({'success': False, 'error_message': 'Unable to retrieve available services from ' + mainRemoteServer.name})
-        return JsonResponse({'repository_name': mainRemoteServer.name, 'repository_url': mainRemoteServer.url, 'availableApps': r.json().get("availableApps")})
-
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def system_version(self, request):
-        APP_VERSION = getattr(settings, "APP_VERSION", 0)
         try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate user
             UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-            #Step 1. Get the latest version
-            mainRemoteServer = RemoteServer.objects.get(enabled=1)
-            r = requests.get(mainRemoteServer.url.rstrip("/") + "/api/latest-version")
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get all services from remote server
+            main_remote_server = RemoteServer.objects.get(enabled=1)
+            r = requests.get(os.path.join(main_remote_server.url, "api/available-applications"))
             if r.status_code != 200:
-                return JsonResponse({'success': False, 'system_version': APP_VERSION, 'error_message': 'Unable to retrieve the latest version from ' + mainRemoteServer.name})
-            return JsonResponse({'system_version': APP_VERSION, 'latest_version': r.json().get("latest_version")})
-        except:
-            return JsonResponse({'system_version': APP_VERSION})
+                raise Exception('Unable to retrieve available services from ' + main_remote_server.name)
+            installed_apps = Application.objects.all()
+            current_versions = {}
+            for application in installed_apps.iterator():
+                current_versions[application.instance_name] = application.version
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 2. Generate the response comparing current vs new version
+            response_content = []
+            available_apps = r.json().get("availableApps")
+            for application in available_apps:
+                if application.get("name") in current_versions and current_versions.get(application.get("name")) != application.get("version"):
+                    response_content.append({'name': application.get("name"), 'current_version': current_versions.get(application.get("name")), "new_version": application.get("version")})
+            return JsonResponse({'available_updates': response_content})
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True)
+    def available_applications(self, request):
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get all services from remote server
+            main_remote_server = RemoteServer.objects.get(enabled=1)
+            r = requests.get(os.path.join(main_remote_server.url, "api/available-applications"))
+            if r.status_code != 200:
+                raise Exception('Unable to retrieve available services from ' + main_remote_server.name)
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 2. Generate the response
+            response_data = {
+                'repository_name': main_remote_server.name,
+                'repository_url': main_remote_server.url,
+                'available_apps': r.json().get("availableApps")
+            }
+            return JsonResponse(response_data)
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
+
+    @action(detail=True)
+    def system_version(self, request):
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate admin user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get the latest version from remote server
+            main_remote_server = RemoteServer.objects.get(enabled=1)
+            r = requests.get(os.path.join(main_remote_server.url, "api/latest-version"))
+            if r.status_code != 200:
+                raise Exception('Unable to retrieve the latest version from ' + main_remote_server.name)
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 2. Generate the response
+            response_data = {
+                'system_version': getattr(settings, "APP_VERSION", 0),
+                'latest_version': r.json().get("latest_version")
+            }
+            return JsonResponse(response_data)
+        except Exception as ex:
+            return JsonResponse({'system_version': getattr(settings, "APP_VERSION", 0)})
+
+    @action(detail=True)
     def get_settings(self, request):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-        return JsonResponse({'settings': self.read_settings(request)})
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate admin user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get the settings from database
+            return JsonResponse({'settings': self.read_settings(request)})
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True)
     def update_app_settings(self, request):
-        user_id = UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-
-        settings = request.data.get("settings", {})
-        if settings.has_key("password") and settings["password"] != "" and settings["password"] == settings["password2"]:
-            try:
-                user = User.objects.get(email=user_id, password=settings.get("prev_password", ""))
-                user.password = settings["password"]
-                user.save()
-            except:
-                response = JsonResponse({'success': False, 'err_code': 404001})
-                response.status_code = 500
-                return response
-
-        self.update_settings(request)
-        return JsonResponse({'success': True})
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate admin user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get the settings from request and return success
+            # TODO: raise errors if settings are not valid
+            self.update_settings(request.data.get("settings", {}))
+            return JsonResponse({'success': True})
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
     # ---------------------------------------------------------------
     #  ADMINISTRATE SERVICES
     # ---------------------------------------------------------------
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True)
     def api_get_all_applications(self, request):
-        queryset = Application.objects.all()
-        response = []
-        for sample in queryset:
-            response.append(sample.to_json())
-        return JsonResponse({"success": True, "data": response})
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get the apps from DB
+            queryset = Application.objects.all()
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 2. Prepare response
+            response = []
+            for sample in queryset:
+                response.append(sample.to_json())
+            return JsonResponse({"success": True, "data": response})
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def status(self, request, instance_name=None):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+    @action(detail=True)
+    def api_service_status(self, request, instance_name=None):
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate admin user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get service information from DB
+            service_instance = Application.objects.filter(instance_name=instance_name)[:1]
+            if len(service_instance) == 0:
+                raise Exception('Unable to find instance for service ' + instance_name)
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 2. Get service status from docker and return the response
+            # TODO: ENQUEUE?
+            p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " status --no-cmd", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            (output, err) = p.communicate()
+            return JsonResponse({'status': output.replace("\n", ""), 'status_msg': err})
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
-        service_instance = Application.objects.filter(instance_name=instance_name)[:1]
-        if len(service_instance) == 0:
-            return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
+    @action(detail=True)
+    def api_service_start(self, request, instance_name=None):
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate admin user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get service information from DB
+            service_instance = Application.objects.filter(instance_name=instance_name)[:1]
+            if len(service_instance) == 0:
+                raise Exception('Unable to find instance for service ' + instance_name)
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 2. Start the service and return the response
+            # TODO: ENQUEUE?
+            p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " start", stdout=subprocess.PIPE, shell=True)
+            (output, err) = p.communicate()
+            return JsonResponse({'success': (p.returncode == 0), "stdout": output, 'stderr': err})
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
-        p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " status --no-cmd", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        (output, err) = p.communicate()
+    @action(detail=True)
+    def api_service_stop(self, request, instance_name=None):
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate admin user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get service information from DB
+            service_instance = Application.objects.filter(instance_name=instance_name)[:1]
+            if len(service_instance) == 0:
+                raise Exception('Unable to find instance for service ' + instance_name)
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 2. Start the service and return the response
+            # TODO: ENQUEUE?
+            p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " stop", stdout=subprocess.PIPE, shell=True)
+            (output, err) = p.communicate()
+            return JsonResponse({'success': (p.returncode == 0), "stdout": output, 'stderr': err})
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
-        return JsonResponse({'status': output.replace("\n",""), 'status_msg': err})
+    @action(detail=True)
+    def api_service_restart(self, request, instance_name=None):
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate admin user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get service information from DB
+            service_instance = Application.objects.filter(instance_name=instance_name)[:1]
+            if len(service_instance) == 0:
+                raise Exception('Unable to find instance for service ' + instance_name)
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 2. Start the service and return the response
+            # TODO: ENQUEUE?
+            p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " restart", stdout=subprocess.PIPE, shell=True)
+            (output, err) = p.communicate()
+            return JsonResponse({'success': (p.returncode == 0), "stdout": output, 'stderr': err})
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def start(self, request, instance_name=None):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-
-        service_instance = Application.objects.filter(instance_name=instance_name)[:1]
-        if len(service_instance) == 0:
-            return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
-
-        p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " start", stdout=subprocess.PIPE, shell=True)
-        (output, err) = p.communicate()
-        returncode = p.returncode
-        success = (returncode == 0)
-        return JsonResponse({'success': success, "stdout": output, 'stderr': err})
-
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def stop(self, request, instance_name=None):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-
-        service_instance = Application.objects.filter(instance_name=instance_name)[:1]
-        if len(service_instance) == 0:
-            return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
-
-        p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " stop", stdout=subprocess.PIPE, shell=True)
-        (output, err) = p.communicate()
-        returncode = p.returncode
-        success = (returncode == 0)
-        return JsonResponse({'success': success, "stdout": output, 'stderr': err})
-
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
-    def restart(self, request, instance_name=None):
-        UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-
-        service_instance = Application.objects.filter(instance_name=instance_name)[:1]
-        if len(service_instance) == 0:
-            return JsonResponse({'success': False, 'error_message': 'Service instance cannot be found'})
-
-        p = subprocess.Popen(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../admin_tools/service') + " " + instance_name + " restart", stdout=subprocess.PIPE, shell=True)
-        (output, err) = p.communicate()
-        returncode = p.returncode
-        success = (returncode == 0)
-        return JsonResponse({'success': success, "stdout": output, 'stderr': err})
-
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True)
     def enable(self, request, instance_name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -216,7 +286,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         application_instance.save()
         return JsonResponse({'enabled': application_instance.enabled})
 
-    @action(detail=True, renderer_classes=[renderers.JSONRenderer])
+    @action(detail=True)
     def disable(self, request, instance_name=None):
         UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
 
@@ -261,9 +331,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         settings["admin_users"] = ",".join(settings["admin_users"])
         return settings
 
-    def update_settings(self, request):
-        settings = request.data.get("settings", {})
-
+    def update_settings(self, settings):
         prev_value = Settings.objects.get(name="tmp_dir")
         if settings["tmp_dir"] != "" and settings["tmp_dir"] != prev_value.value.rstrip("/") + "/":
             prev_value.value = settings["tmp_dir"].rstrip("/") + "/"

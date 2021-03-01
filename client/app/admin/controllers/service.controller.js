@@ -135,7 +135,7 @@
       then(
         function successCallback(response) {
           $scope.isLoading = false;
-          $scope.services = ServiceList.updateServices(response.data.availableApps).getServices();
+          $scope.services = ServiceList.updateServices(response.data["available_apps"]).getServices();
           $scope.categories = ServiceList.updateCategories().getCategories();
           $scope.repository_name = response.data.repository_name;
           $scope.repository_url = response.data.repository_url;
@@ -571,7 +571,7 @@
       delete service.status_msg;
       $scope.current_action = "Stopping service";
 
-      $http($rootScope.getHttpRequestConfig("GET", "service-stop", {
+      $http($rootScope.getHttpRequestConfig("POST", "service-stop", {
         extra: service.instance_name
       })).then(
         function successCallback(response) {
@@ -595,7 +595,7 @@
       delete service.status_msg;
       $scope.current_action = "Starting service";
 
-      $http($rootScope.getHttpRequestConfig("GET", "service-start", {
+      $http($rootScope.getHttpRequestConfig("POST", "service-start", {
         extra: service.instance_name
       })).then(
         function successCallback(response) {
@@ -619,7 +619,7 @@
       delete service.status_msg;
       $scope.current_action = "Restarting service";
 
-      $http($rootScope.getHttpRequestConfig("GET", "service-restart", {
+      $http($rootScope.getHttpRequestConfig("POST", "service-restart", {
         extra: service.instance_name
       })).then(
         function successCallback(response) {
