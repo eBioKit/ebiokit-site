@@ -90,6 +90,9 @@ class UserViewSet(viewsets.ModelViewSet):
             user_id = UserSessionManager().validate_session(request.COOKIES.get('ebiokitsession'))
             # Validate information
             password = request.data.get("password").encode('utf-8')
+            password2 = request.data.get("password2").encode('utf-8')
+            if password != password2:
+                raise Exception("Passwords do not match.")
             if not self.validate_password(password=password.decode('utf-8')):
                 raise Exception("Invalid password. Password must contain at least 8 characters (one upper case, one number and no spaces).")
             user = User.objects.get(email=user_id)
