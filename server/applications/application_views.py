@@ -130,11 +130,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
     # --------------------------------------------------------
-    # URLs FOR SYSTEM INFO
+    # URLs FOR APPLICATIONS INFO
     # --------------------------------------------------------
 
     @action(detail=True)
-    def available_updates(self, request, name=None):
+    def api_applications_updates(self, request, name=None):
         try:
             # --------------------------------------------------------------------------------------------------------------
             # Step 0. Validate user
@@ -162,7 +162,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
     @action(detail=True)
-    def available_applications(self, request):
+    def api_applications_available(self, request):
         try:
             # --------------------------------------------------------------------------------------------------------------
             # Step 0. Validate user
@@ -199,7 +199,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             response = []
             for sample in queryset:
                 response.append(sample.to_json())
-            return JsonResponse({"success": True, "data": response})
+            return JsonResponse({"success": True, "services": response})
         except Exception as ex:
             logger.error(str(ex))
             return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})

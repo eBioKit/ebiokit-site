@@ -44,7 +44,7 @@
 			$scope.isLoading = true;
 
 			if(ServiceList.getOld() > 1 || force){ //Max age for data 5min.
-				$http($rootScope.getHttpRequestConfig("GET", "service-list", {}))
+				$http($rootScope.getHttpRequestConfig("POST", "service-list", {}))
 				.then(
 					function successCallback(response){
 						$scope.isLoading = false;

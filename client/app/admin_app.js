@@ -167,10 +167,10 @@
 				return myAppConfig.SERVER_URL + "api/applications/" + extra + "/upgrade/";
 				case "service-uninstall":
 				return myAppConfig.SERVER_URL + "api/applications/" + extra + "/uninstall/";
-				case "available-updates":
-				return myAppConfig.SERVER_URL + "api/applications/available-updates/";
-				case "available-applications":
-				return myAppConfig.SERVER_URL + "api/applications/available-applications/";
+				case "applications-updates":
+				return myAppConfig.SERVER_URL + "api/applications/updates/";
+				case "applications-available":
+				return myAppConfig.SERVER_URL + "api/applications/available/";
 				case "job-list":
 				return myAppConfig.SERVER_URL + "api/applications/jobs/" + extra;
 				case "task-log":
@@ -189,7 +189,7 @@
 				headers: options.headers,
 				url: this.getRequestPath(service, options.extra),
 				params: options.params,
-				data: options.data
+				data: (options.data || {})
 			};
 
 			if(options.transformRequest !== undefined){

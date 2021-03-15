@@ -39,17 +39,17 @@
             <div class="input-group" style="width: 100%;">
               <input type="text" class="form-control" placeholder="Search for..." ng-model="searchFor" ng-enter="controller.applySearchHandler()">
               <span class="input-group-btn">
-								<button class="btn btn-default" type="button" ng-click="controller.applySearchHandler()">
-									<span class="glyphicon glyphicon-search"></span>
-              </button>
+                <button class="btn btn-default" type="button" ng-click="controller.applySearchHandler()">
+                    <span class="glyphicon glyphicon-search"></span>
+                </button>
               </span>
             </div>
             <!-- /input-group -->
             <div class="search-tag-container">
               <i class="label label-primary" ng-repeat="item in filters">
-								<span class="tag-name">
-									<i class="fa fa-times clickable" ng-click="controller.removeFilterHandler(item);"></i> {{item}}
-              </span>
+                <span class="tag-name">
+                    <i class="fa fa-times clickable" ng-click="controller.removeFilterHandler(item);"></i> {{item}}
+                </span>
               </i>
             </div>
           </div>

@@ -17,9 +17,9 @@
 *  along with eBioKit portal.  If not, see <http://www.gnu.org/licenses/>.
 *
 * Contributors:
-*     Dr. Erik Bongcam-Rudloff
-*     Dr. Rafael Hernandez de Diego (main developer)
-*     and others.
+*	 Dr. Erik Bongcam-Rudloff
+*	 Dr. Rafael Hernandez de Diego (main developer)
+*	 and others.
 *
 *  More info http://ebiokit.eu/
 *  Technical contact ebiokit@gmail.com
@@ -136,9 +136,11 @@
 			},
 			updateCategories: function() {
 				var categoriesAux = {}, _categories;
-
 				for(var i in services){
-					_categories = services[i].categories.split(",");
+					_categories = [];
+					if(services[i].categories){
+						_categories = services[i].categories.split(",");
+					}
 					for(var j in _categories){
 						categoriesAux[_categories[j]] = {
 							name: _categories[j],

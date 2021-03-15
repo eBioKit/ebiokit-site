@@ -58,12 +58,12 @@ api_settings_update = ApplicationViewSet.as_view({
 # --------------------------------------------------------
 # URLs FOR APPLICATIONS MANAGEMENT
 # --------------------------------------------------------
-available_updates = ApplicationViewSet.as_view({
-    'get': 'available_updates'
+api_applications_updates = ApplicationViewSet.as_view({
+    'post': 'api_applications_updates'
 }, renderer_classes=[renderers.JSONRenderer])
 
-available_applications = ApplicationViewSet.as_view({
-    'get': 'available_applications'
+api_applications_available = ApplicationViewSet.as_view({
+    'post': 'api_applications_available'
 }, renderer_classes=[renderers.JSONRenderer])
 
 # version = ApplicationViewSet.as_view({
@@ -71,8 +71,7 @@ available_applications = ApplicationViewSet.as_view({
 # }, renderer_classes=[renderers.JSONRenderer])
 
 api_get_all_applications = ApplicationViewSet.as_view({
-    'get': 'api_get_all_applications',
-    'post': 'create'
+    'post': 'api_get_all_applications'
 })
 #
 # application_list = ApplicationViewSet.as_view({
@@ -172,8 +171,8 @@ urlpatterns = [
     # --------------------------------------------------------
     url(r'^system/info/$', api_system_info, name='api_system_info'),
     url(r'^system/version/$', api_system_version, name='api_system_version'),
-    url(r'^settings/$', api_settings_get, name='api_settings_get'),
     url(r'^settings/update/$', api_settings_update, name='api_settings_update'),
+    url(r'^settings/$', api_settings_get, name='api_settings_get'),
     # --------------------------------------------------------
     # URLs FOR USERS
     # --------------------------------------------------------
@@ -186,8 +185,8 @@ urlpatterns = [
     # --------------------------------------------------------
     # URLs FOR APPLICATIONS MANAGEMENT
     # --------------------------------------------------------
-    url(r'^applications/available-updates/$', available_updates, name='available-updates'),
-    url(r'^applications/available-applications/$', available_applications, name='available-applications'),
+    url(r'^applications/updates/$', api_applications_updates, name='api_applications_updates'),
+    url(r'^applications/available/$', api_applications_available, name='api_applications_available'),
     url(r'^applications/$', api_get_all_applications, name='application-list'),
     # --------------------------------------------------------
     # URLs FOR APPLICATION INSTANCE MANAGEMENT

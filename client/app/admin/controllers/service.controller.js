@@ -47,20 +47,20 @@
       $scope.isLoading = true;
 
       if (ServiceList.getOld() > 1 || force) { //Max age for data 5min.
-        $http($rootScope.getHttpRequestConfig("GET", "service-list", {})).
+        $http($rootScope.getHttpRequestConfig("POST", "service-list", {})).
         then(
           function successCallback(response) {
             $scope.isLoading = false;
-            $scope.services = ServiceList.setServices(response.data).getServices();
-            $scope.categories = ServiceList.updateCategories().getCategories();
-
-            if (callback_function !== undefined) {
-              callback_caller[callback_function]();
+            if(response.data.success){
+                $scope.services = ServiceList.setServices(response.data.services).getServices();
+                $scope.categories = ServiceList.updateCategories().getCategories();
+                if (callback_function !== undefined) {
+                  callback_caller[callback_function]();
+                }
             }
           },
           function errorCallback(response) {
             $scope.isLoading = false;
-
             debugger;
             var message = "Failed while retrieving the services list.";
             $dialogs.showErrorDialog(message, {
@@ -107,10 +107,9 @@
     };
 
     this.checkAvailableUpdates = function() {
-      debugger
       $scope.isLoading = true;
 
-      $http($rootScope.getHttpRequestConfig("GET", "available-updates", {})).
+      $http($rootScope.getHttpRequestConfig("POST", "applications-updates", {})).
       then(
         function successCallback(response) {
           $scope.isLoading = false;
@@ -131,7 +130,7 @@
     this.retrieveAvailableApplications = function() {
       $scope.isLoading = true;
 
-      $http($rootScope.getHttpRequestConfig("GET", "available-applications", {})).
+      $http($rootScope.getHttpRequestConfig("POST", "applications-available", {})).
       then(
         function successCallback(response) {
           $scope.isLoading = false;
