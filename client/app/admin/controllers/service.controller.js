@@ -155,7 +155,7 @@
 
     this.retrieveSystemSettings = function() {
       var me = this;
-      $http($rootScope.getHttpRequestConfig("GET", "system-settings", {})).
+      $http($rootScope.getHttpRequestConfig("POST", "settings-get", {})).
       then(
         function successCallback(response) {
           $scope.settings = response.data.settings;
@@ -343,7 +343,7 @@
 
       delete $scope.settings.invalid_prev_pass;
       var me = this;
-      $http($rootScope.getHttpRequestConfig("POST", "system-settings", {
+      $http($rootScope.getHttpRequestConfig("POST", "settings-update", {
         data: {
           "settings": $scope.settings
         }
