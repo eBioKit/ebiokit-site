@@ -29,8 +29,6 @@ import importlib, inspect
 
 from django.contrib import admin
 
-from .models import *
-
 for name, cls in inspect.getmembers(importlib.import_module("applications.models"), inspect.isclass):
     if cls.__module__ == 'applications.models':
         AdminClass = type(name + "Admin", (admin.ModelAdmin,), {

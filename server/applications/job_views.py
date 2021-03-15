@@ -497,18 +497,23 @@ class JobViewSet(viewsets.ModelViewSet):
             clean_data_handler(id, settings, full=True)
             return JsonResponse({'success': True})
 
-    #---------------------------------------------------------------
-    #- OTHER FUNCTIONS
-    #---------------------------------------------------------------
+    # ---------------------------------------------------------------
+    # - OTHER FUNCTIONS
+    # ---------------------------------------------------------------
 
-    def get_new_job_id(self):
-        #RANDOM GENERATION OF THE JOB ID
-        #TODO: CHECK IF NOT EXISTING ID
+    @staticmethod
+    def get_new_job_id():
+        """
+        RANDOM GENERATION OF THE JOB ID
+        :return:
+        """
+        # TODO: CHECK IF NOT EXISTING ID
         import string, random
-        jobID = ''.join(random.sample(string.ascii_letters+string.octdigits*5,10))
-        return jobID
+        job_id = ''.join(random.sample(string.ascii_letters+string.octdigits*5,10))
+        return job_id
 
-    def read_settings(self, request):
+    @staticmethod
+    def read_settings(request):
         settings = request.data.get("settings", {})
         settings["INSTANCE_URL"] = "/" + settings.get("INSTANCE_URL", settings.get("INSTANCE_NAME", "")).strip("/").replace("_", "-") + "/"
         settings["tmp_dir"] = Settings.objects.get(name="tmp_dir").value.rstrip("/") + "/"
@@ -526,16 +531,16 @@ class JobViewSet(viewsets.ModelViewSet):
 
         return settings
 
-    def get_current_settings(self, ignore=None):
+    @staticmethod
+    def get_current_settings(ignore=None):
         applications = Application.objects.all()
-
         instance_names = []
         instance_titles = []
         ports = []
         for application in applications:
-            if ignore != None and application.instance_name in ignore:
+            if ignore is not None and application.instance_name in ignore:
                 continue
             instance_titles.append(application.title)
             instance_names.append(application.instance_name)
             ports += application.port.split(",")
-        return {"titles" : instance_titles, "instance_names" : instance_names, "ports" : ports}
+        return {"titles": instance_titles, "instance_names": instance_names, "ports": ports}
