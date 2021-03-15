@@ -98,6 +98,38 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return JsonResponse({'system_version': getattr(settings, "APP_VERSION", 0)})
 
     # --------------------------------------------------------
+    # URLs FOR SETTINGS
+    # --------------------------------------------------------
+
+    @action(detail=True)
+    def api_settings_get(self, request):
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate admin user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get the settings from database
+            return JsonResponse({'settings': self.read_settings(request)})
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
+
+    @action(detail=True)
+    def api_settings_update(self, request):
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate admin user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get the settings from request and return success
+            # TODO: raise errors if settings are not valid
+            self.update_settings(request.data.get("settings", {}))
+            return JsonResponse({'success': True})
+        except Exception as ex:
+            logger.error(str(ex))
+            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
+
+    # --------------------------------------------------------
     # URLs FOR SYSTEM INFO
     # --------------------------------------------------------
 
@@ -149,38 +181,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 'available_apps': r.json().get("availableApps")
             }
             return JsonResponse(response_data)
-        except Exception as ex:
-            logger.error(str(ex))
-            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
-
-    # --------------------------------------------------------
-    # URLs FOR SETTINGS
-    # --------------------------------------------------------
-
-    @action(detail=True)
-    def api_settings_get(self, request):
-        try:
-            # --------------------------------------------------------------------------------------------------------------
-            # Step 0. Validate admin user
-            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-            # --------------------------------------------------------------------------------------------------------------
-            # Step 1. Get the settings from database
-            return JsonResponse({'settings': self.read_settings(request)})
-        except Exception as ex:
-            logger.error(str(ex))
-            return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
-
-    @action(detail=True)
-    def api_settings_update(self, request):
-        try:
-            # --------------------------------------------------------------------------------------------------------------
-            # Step 0. Validate admin user
-            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-            # --------------------------------------------------------------------------------------------------------------
-            # Step 1. Get the settings from request and return success
-            # TODO: raise errors if settings are not valid
-            self.update_settings(request.data.get("settings", {}))
-            return JsonResponse({'success': True})
         except Exception as ex:
             logger.error(str(ex))
             return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
@@ -310,7 +310,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     # - OTHER FUNCTIONS
     # ---------------------------------------------------------------
 
-    def read_settings(self, request):
+    @staticmethod
+    def read_settings(request):
         settings = request.data.get("settings", {})
         # Get temporal directory
         settings["messages"] = {}
@@ -319,7 +320,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             settings["messages"]["tmp_dir"] = "Invalid directory. Check if directory exists and if is writable."
         # Get data directory
         settings["ebiokit_data_location"] = Settings.objects.get(name="ebiokit_data_location").value.rstrip("/") + "/"
-        if not self.check_valid_data_location(settings["ebiokit_data_location"]):
+        if not ApplicationViewSet.check_valid_data_location(settings["ebiokit_data_location"]):
             settings["messages"]["ebiokit_data_location"] = "Invalid directory. Check if directory exists, if it is writable and if required subdirectories has been created."
         # Get nginx directory
         settings["nginx_data_location"] = Settings.objects.get(name="nginx_data_location").value.rstrip("/") + "/"
@@ -342,7 +343,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         settings["admin_users"] = ",".join(settings["admin_users"])
         return settings
 
-    def update_settings(self, settings):
+    @staticmethod
+    def update_settings(settings):
         prev_value = Settings.objects.get(name="tmp_dir")
         if settings["tmp_dir"] != "" and settings["tmp_dir"] != prev_value.value.rstrip("/") + "/":
             prev_value.value = settings["tmp_dir"].rstrip("/") + "/"
