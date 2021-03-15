@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 def docker_pull_handler(task_id, docker_name, settings=None):
     """
     This function handles the tasks "docker pull" to install new docker images.
-    #TODO: version param?
+    # TODO: version param?
     :param task_id:
     :param docker_name:
     :param settings:
@@ -229,7 +229,7 @@ def clean_data_handler(task_id, settings=None, full=False):
     """
     try:
         working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
-        #TODO remove previous version of docker? docker_name param?
+        # TODO remove previous version of docker? docker_name param?
         # if docker_name != None:
         #     print "Removing previous version for image " + docker_name + "..."
         #     command = "docker rmi ebiokit/" + docker_name + ":backup"
@@ -263,7 +263,7 @@ def stop_service_handler(task_id, instance_name=None, dockers="", settings=None)
     """
     try:
         working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
-        #STOP THE CONTAINERS
+        # STOP THE CONTAINERS
         log(working_dir, "stop_service_handler - Stopping docker containers...", task_id)
         ebiokit_remote_launcher("service stop", instance_name, settings, ignore=True)
         return True
@@ -424,7 +424,7 @@ def get_service_ports(settings):
     return ports
 
 
-def functionWrapper(taks_id, command):
+def function_wrapper(taks_id, command):
     logger.info("Task " + taks_id + " started...")
     output = subprocess.check_output(['bash', '-c', command])
     logger.info("Task " + taks_id + " finished...")

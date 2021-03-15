@@ -183,7 +183,7 @@ class JobViewSet(viewsets.ModelViewSet):
             for task in tasks:
                 if task.command != "":
                     pysiq_enqueue(
-                        fn="functionWrapper",
+                        fn="function_wrapper",
                         args=(task.name + '(' + task.id + ')', task.command),
                         task_id=task.id,
                         depend=(None if len(task.depend) == 0 else task.depend.split(",")),
@@ -315,7 +315,7 @@ class JobViewSet(viewsets.ModelViewSet):
             for task in tasks:
                 if task.command != "":
                     pysiq_enqueue(
-                        fn="functionWrapper",
+                        fn="function_wrapper",
                         args=(task.name + '(' + task.id + ')', task.command),
                         task_id=task.id,
                         depend=(None if len(task.depend) == 0 else task.depend.split(",")),
@@ -383,7 +383,7 @@ class JobViewSet(viewsets.ModelViewSet):
             for task in tasks:
                 if task.command != "":
                     pysiq_enqueue(
-                        fn="functionWrapper",
+                        fn="function_wrapper",
                         args=(task.name + '(' + task.id + ')', task.command),
                         task_id=task.id,
                         depend=(None if len(task.depend) == 0 else task.depend.split(",")),
