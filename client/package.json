@@ -5,7 +5,8 @@
   "main": "app.js",
   "author": "Rafael Hernandez",
   "dependencies": {
+    "bower": "1.7.9",
     "express": "^4.13.4",
-    "bower": "1.7.9"
+    "http-server": "^0.12.3"
   }
 }
