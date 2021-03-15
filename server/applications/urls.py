@@ -34,19 +34,25 @@ from .user_views import UserViewSet
 from rest_framework import renderers
 
 # --------------------------------------------------------
-# URLs FOR SYSTEM STATUS
+# URLs FOR SYSTEM INFO
 # --------------------------------------------------------
-system_info = ApplicationViewSet.as_view({
-    'get': 'system_info'
+api_system_info = ApplicationViewSet.as_view({
+    'get': 'api_system_info'
 }, renderer_classes=[renderers.JSONRenderer])
 
-system_version = ApplicationViewSet.as_view({
-    'get': 'system_version'
+api_system_version = ApplicationViewSet.as_view({
+    'get': 'api_system_version'
 }, renderer_classes=[renderers.JSONRenderer])
 
-system_settings = ApplicationViewSet.as_view({
-    'get': 'get_settings',
-    'post': 'update_app_settings'
+# --------------------------------------------------------
+# URLs FOR SETTINGS
+# --------------------------------------------------------
+api_settings_get = ApplicationViewSet.as_view({
+    'post': 'api_settings_get'
+}, renderer_classes=[renderers.JSONRenderer])
+
+api_settings_update = ApplicationViewSet.as_view({
+    'post': 'api_settings_update'
 }, renderer_classes=[renderers.JSONRenderer])
 
 # --------------------------------------------------------
@@ -164,9 +170,10 @@ urlpatterns = [
     # --------------------------------------------------------
     # URLs FOR SYSTEM STATUS
     # --------------------------------------------------------
-    url(r'^system/info/$', system_info, name='system-info'),
-    url(r'^system/version/$', system_version, name='system-version'),
-    url(r'^system/settings/$', system_settings, name='system-settings'),
+    url(r'^system/info/$', api_system_info, name='api_system_info'),
+    url(r'^system/version/$', api_system_version, name='api_system_version'),
+    url(r'^settings/$', api_settings_get, name='api_settings_get'),
+    url(r'^settings/update/$', api_settings_update, name='api_settings_update'),
     # --------------------------------------------------------
     # URLs FOR USERS
     # --------------------------------------------------------

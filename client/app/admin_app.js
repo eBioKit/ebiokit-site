@@ -135,10 +135,12 @@
 				return myAppConfig.SERVER_URL + "api/session/validate/";
 				case "system-info":
 				return myAppConfig.SERVER_URL + "api/system/info/";
-				case "system-settings":
-				return myAppConfig.SERVER_URL + "api/system/settings/";
 				case "system-version":
 				return myAppConfig.SERVER_URL + "api/system/version/";
+				case "settings-get":
+				return myAppConfig.SERVER_URL + "api/settings/";
+				case "settings-update":
+				return myAppConfig.SERVER_URL + "api/settings/update/";
 				case "service-list":
 				return myAppConfig.SERVER_URL + "api/applications/";
 				case "service-info":
@@ -211,7 +213,7 @@
 		};
 
 		this.retrieveSystemVersion = function(){
-			$http($rootScope.getHttpRequestConfig("GET", "system-version", {})).
+			$http($rootScope.getHttpRequestConfig("GET", "system-version-get", {})).
 			then(
 				function successCallback(response){
 					$rootScope.systemVersion = "" + response.data.system_version;

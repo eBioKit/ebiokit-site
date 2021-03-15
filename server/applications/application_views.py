@@ -37,7 +37,6 @@ from django.conf import settings
 from rest_framework import viewsets
 from django.http import JsonResponse
 from rest_framework.decorators import action
-from rest_framework import renderers
 
 from .models import Application, RemoteServer, Settings, User
 from .resources.UserSessionManager import UserSessionManager
@@ -59,8 +58,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     #   |_||_|/_/ \_\|_|\_||___/ |____||___||_|_\|___/
     # --------------------------------------------------------------------------------------------
 
+    # --------------------------------------------------------
+    # URLs FOR SYSTEM INFO
+    # --------------------------------------------------------
+
     @action(detail=True)
-    def system_info(self, request):
+    def api_system_info(self, request):
         # TODO: restrict to authorized users?
         # UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
         return JsonResponse({
@@ -71,6 +74,32 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             "swap_total": psutil.swap_memory().total/(1024.0**3),
             "swap_use": psutil.swap_memory().percent
         })
+
+    @action(detail=True)
+    def api_system_version(self, request):
+        try:
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 0. Validate admin user
+            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 1. Get the latest version from remote server
+            main_remote_server = RemoteServer.objects.get(enabled=1)
+            r = requests.get(os.path.join(main_remote_server.url, "api/latest-version"))
+            if r.status_code != 200:
+                raise Exception('Unable to retrieve the latest version from ' + main_remote_server.name)
+            # --------------------------------------------------------------------------------------------------------------
+            # Step 2. Generate the response
+            response_data = {
+                'system_version': getattr(settings, "APP_VERSION", 0),
+                'latest_version': r.json().get("latest_version")
+            }
+            return JsonResponse(response_data)
+        except Exception as ex:
+            return JsonResponse({'system_version': getattr(settings, "APP_VERSION", 0)})
+
+    # --------------------------------------------------------
+    # URLs FOR SYSTEM INFO
+    # --------------------------------------------------------
 
     @action(detail=True)
     def available_updates(self, request, name=None):
@@ -124,30 +153,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             logger.error(str(ex))
             return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
-    @action(detail=True)
-    def system_version(self, request):
-        try:
-            # --------------------------------------------------------------------------------------------------------------
-            # Step 0. Validate admin user
-            UserSessionManager().validate_admin_session(request.COOKIES.get("ebiokitsession"))
-            # --------------------------------------------------------------------------------------------------------------
-            # Step 1. Get the latest version from remote server
-            main_remote_server = RemoteServer.objects.get(enabled=1)
-            r = requests.get(os.path.join(main_remote_server.url, "api/latest-version"))
-            if r.status_code != 200:
-                raise Exception('Unable to retrieve the latest version from ' + main_remote_server.name)
-            # --------------------------------------------------------------------------------------------------------------
-            # Step 2. Generate the response
-            response_data = {
-                'system_version': getattr(settings, "APP_VERSION", 0),
-                'latest_version': r.json().get("latest_version")
-            }
-            return JsonResponse(response_data)
-        except Exception as ex:
-            return JsonResponse({'system_version': getattr(settings, "APP_VERSION", 0)})
+    # --------------------------------------------------------
+    # URLs FOR SETTINGS
+    # --------------------------------------------------------
 
     @action(detail=True)
-    def get_settings(self, request):
+    def api_settings_get(self, request):
         try:
             # --------------------------------------------------------------------------------------------------------------
             # Step 0. Validate admin user
@@ -160,7 +171,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return JsonResponse({'success': False, 'other': {'error_message': str(ex)}})
 
     @action(detail=True)
-    def update_app_settings(self, request):
+    def api_settings_update(self, request):
         try:
             # --------------------------------------------------------------------------------------------------------------
             # Step 0. Validate admin user
@@ -415,7 +426,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     except:
                         pass
 
-    def check_valid_data_location(self, data_location):
+    @staticmethod
+    def check_valid_data_location(data_location):
         subdir = data_location.rstrip("/") + "/ebiokit-services/uninstallers"
         if not os.path.exists(subdir) or not os.access(subdir, WRITABLE_OK):
             return False
