@@ -136,11 +136,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ.get('MYSQL_DATABASE_NAME', 'ebiokit_db'),
+        'USER': os.environ.get('MYSQL_ROOT_USER', 'root'),
+        'PASSWORD': os.environ.get('MYSQL_ROOT_PASSWORD', '123123'),
+        'HOST': os.environ.get('MYSQL_HOST', '0.0.0.0')
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
