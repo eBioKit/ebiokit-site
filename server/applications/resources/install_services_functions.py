@@ -38,24 +38,23 @@ remove_service_data_handler
 
 import subprocess
 import json
-import sys
 import os
-import django
 import logging
 from shutil import rmtree
 import requests
-
+import MySQLdb
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
 
-def docker_pull_handler(task_id, docker_name, settings=None):
+def docker_pull_handler(task_id, docker_name, version="latest", settings=None):
     """
     This function handles the tasks "docker pull" to install new docker images.
     # TODO: version param?
     :param task_id:
     :param docker_name:
+    :param version:
     :param settings:
     :return:
     """
@@ -63,7 +62,7 @@ def docker_pull_handler(task_id, docker_name, settings=None):
         working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
         log(working_dir, "docker_pull_handler - Pulling image " + docker_name + "...", task_id)
         command = "docker pull " + docker_name
-        output = subprocess.check_output(['bash', '-c', command])
+        output = run_remote_command(command)
         log(working_dir, "docker_pull_handler - Docker image successfully downloaded. " + output, task_id)
         return True
     except Exception as e:
@@ -157,59 +156,47 @@ def register_service_handler(task_id, instance_name=None, settings=None):
     the uninstall instructions.
     """
     try:
-        #TODO dockers param?
-        # First register the new service in the database
+        # TODO dockers param?
+        # First read the information for the service to register
         working_dir = get_job_directory(settings.get("tmp_dir"), task_id)
         log(working_dir, "register_service_handler - Loading service json data...", task_id)
         with open(working_dir + '/service_conf/service.json') as data_file:
             data = json.load(data_file)
-
+        # Now add the information to database
         log(working_dir, "register_service_handler - Add service to database...", task_id)
-        # Load DJANGO environment to access databases
-        # TODO: USE DATABASE DIRECTLY AND REMOVE DEPENDECY FOR DJANGO
-        sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
-        django.setup()
-        from applications.models import Application
-
-        try:
-            service = Application.objects.get(instance_name=instance_name)
-            if service is None:
-                log(working_dir, "register_service_handler - Service was not in database...", task_id)
-                raise Exception("Object not found in db")
-            else:
-                log(working_dir, "register_service_handler - Service was already in database...", task_id)
-        except Exception as e:
-            service = Application()
-
-        service.instance_name = instance_name
-        service.title = settings.get("INSTANCE_TITLE", data.get("title"))
-        service.description = data.get("description")
-        service.categories = data.get("categories")
-        service.version = data.get("version")
-        service.service = data.get("service")
-        service.port = ",".join(get_service_ports(settings))
-        service.website = "<HOST_NAME>:" + get_service_ports(settings)[0]
-        #TODO: tipo?
-        # service.type = data.get("type")
-        service.raw_options = json.dumps(settings, ensure_ascii=False)
-        service.save()
-
-        settings["INSTANCE_DOCKERS"] = data.get("dockers").replace(",", "#")
-        settings["DATA_LOCATION"] = os.path.join(settings.get("ebiokit_data_location"), "ebiokit-data")
+        data["instance_name"] = instance_name
+        data["title"] = settings.get("INSTANCE_TITLE", data.get("title"))
+        data["port"] = ",".join(get_service_ports(settings))
+        data["website"] = "<HOST_NAME>:" + get_service_ports(settings)[0]
+        data["raw_options"] = json.dumps(settings, ensure_ascii=False)
+        # Prepare the SQL query
+        keys = list(data.keys())
+        data = [data[k] for k in keys]
+        sql = "INSERT INTO applications_application (" + ",".join(keys) + ") VALUES (" + ",".join(data) + ")"
+        # Insert the data
+        # TODO: LOCATE THE DATABASE INFORMATION?
+        mydb = MySQLdb.connect(
+            host="mysql_server",
+            user="yourusername",
+            password="yourpassword",
+            database="ebiokit_db"
+        )
+        mycursor = mydb.cursor()
+        mycursor.execute(sql)
+        mydb.commit()
 
         # Now adapt the settings for the proxy rules and copy them to the correspoding directory
+        settings["INSTANCE_DOCKERS"] = data.get("dockers").replace(",", "#")
+        settings["DATA_LOCATION"] = os.path.join(settings.get("ebiokit_data_location"), "ebiokit-data")
         log(working_dir, "register_service_handler - Registering service in proxy", task_id)
         copy_and_replace(working_dir + "/service_conf/proxy.upstream", settings.get("nginx_data_location") + instance_name + ".upstream", replacements=settings)
         copy_and_replace(working_dir + "/service_conf/proxy.conf", settings.get("nginx_data_location") + instance_name + ".conf", replacements=settings)
-
         # Now copy the launcher file (docker-compose) to auto-launch the service on boot
         log(working_dir, "register_service_handler - Add launcher file", task_id)
         command = "mkdir -p " + settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name
-        output = subprocess.check_output(['bash', '-c', command])
+        subprocess.check_output(['bash', '-c', command])
         copy_and_replace(working_dir + "/service_conf/service.launcher", settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name + "/docker-compose.yml", replacements=settings)
         create_env_file(settings.get("ebiokit_data_location") + "ebiokit-services/launchers/" + instance_name, settings)
-
         # Save the auto-remove instructions
         log(working_dir, "register_service_handler - Add uninstall instructions", task_id)
         copy_and_replace(working_dir + "/service_conf/uninstall.json", settings.get("ebiokit_data_location") + "ebiokit-services/uninstallers/" + instance_name + ".json", replacements=settings)
@@ -498,3 +485,9 @@ def backup_data_handler(jobID, instance_name, settings=None):
     #TODO: backup data
 
     return True
+
+
+def run_remote_command(command, remote_server="localhost", remote_user="ebiokit"):
+    output = subprocess.check_output(['ssh', remote_user + '@' + remote_server, command])
+    return output
+
