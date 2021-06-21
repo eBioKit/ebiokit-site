@@ -72,7 +72,7 @@ class Application(models.Model):
 
 class RemoteServer(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    url = models.CharField(max_length=300)
+    url = models.TextField(max_length=250)
     enabled = models.BooleanField(default=0)
 
     @staticmethod
@@ -82,7 +82,7 @@ class RemoteServer(models.Model):
 
 class Job(models.Model):
     id = models.CharField(max_length=100, primary_key=True)
-    name = models.CharField(max_length=300)
+    name = models.CharField(max_length=250)
     date = models.CharField(max_length=12)
 
     def to_json(self):
@@ -99,8 +99,8 @@ class Job(models.Model):
 
 class Task(models.Model):
     job_id = models.CharField(max_length=100)
-    id = models.CharField(max_length=300, primary_key=True)
-    name = models.CharField(max_length=300)
+    id = models.CharField(max_length=100, primary_key=True)
+    name = models.CharField(max_length=250)
     command = models.TextField(default="")
     function = models.TextField(default="")
     params = models.TextField(default="")
@@ -129,7 +129,7 @@ class Task(models.Model):
 
 class Settings(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    value = models.CharField(max_length=300)
+    value = models.CharField(max_length=250)
 
     def to_json(self):
         return {

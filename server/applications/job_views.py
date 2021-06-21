@@ -38,7 +38,7 @@ from rest_framework.decorators import action
 from .models import Application, RemoteServer, Job, Task, Settings
 from .resources.UserSessionManager import UserSessionManager
 from .resources.pysiq_api import enqueue as pysiq_enqueue, get_result as  pysiq_get_result, check_status as  pysiq_check_status
-from .install_services_functions import clean_data_handler
+from .resources.install_services_functions import clean_data_handler
 from .serializers import JobSerializer
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
